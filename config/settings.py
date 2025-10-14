@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-piru2^pjq@3_k&el@&m8nxa6*2zv!wa4-3j(3_3hw+pz9-rg5)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.0.105']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.0.105', 'https://tauani.pythonanywhere.com/', 'tauani.pythonanywhere.com']
 
 
 
