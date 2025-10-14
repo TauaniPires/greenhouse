@@ -1,0 +1,205 @@
+{% extends 'base.html' %} {% block content %}
+<style>
+  /* Container do título e seta */
+  .title-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    width: 100%;
+  }
+  .back-arrow {
+    position: absolute;
+    left: 20px;
+    font-size: 40px;
+    color: #28a745;
+    font-weight: bold;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .back-arrow:hover {
+    color: #218838;
+  }
+  h2 {
+    margin: 5px 0;
+    font-size: 1.8rem;
+    color: #333;
+    text-align: center;
+  }
+
+  /* Barra de filtros */
+  .filter-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap; /* Permite quebrar a linha se necessário */
+    gap: 10px; /* Espaço entre elementos */
+    margin-bottom: 20px;
+  }
+  .filter-bar label {
+    font-weight: bold;
+    margin-right: 5px;
+    font-size: 16px;
+  }
+  .filter-bar input {
+    padding: 5px 12px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background-color: #f8f9fa;
+    cursor: pointer;
+  }
+
+  /* Gráfico responsivo */
+  .chart-container {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    height: 300px;
+    margin: 0 auto;
+  }
+  @media (min-width: 768px) {
+    .chart-container {
+      height: 400px;
+    }
+  }
+
+  /* Responsivo para celular */
+  @media (max-width: 600px) {
+    .filter-bar {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .title-container {
+      flex-direction: column;
+      align-items: flex-start;
+      margin-top: 10px;
+    }
+    .back-arrow {
+      position: static;
+      margin-bottom: 5px;
+      font-size: 36px;
+    }
+    h2 {
+      font-size: 1.2rem;
+      text-align: center;
+    }
+    .filter-bar input {
+      font-size: 10px;
+      padding: 4px 6px;
+      margin-bottom: 5px;
+    }
+    .filter-bar label,
+    .filter-bar input,
+    .filter-bar button {
+      width: 100%; /* Ocupa toda a largura */
+      font-size: 14px;
+    }
+    .filter-bar button {
+      text-align: center;
+      padding: 4px 6px;
+    }
+  }
+</style>
+
+<div class="title-container">
+  <a href="{% url 'dashboard' %}" class="back-arrow">←</a>
+  <h2>Histórico de Temperatura e Umidade</h2>
+</div>
+
+<div class="filter-bar">
+  <label for="startDate">Data Inicial:</label>
+  <input type="date" id="startDate" value="{{ start_date }}" />
+  <label for="endDate">Data Final:</label>
+  <input type="date" id="endDate" value="{{ end_date }}" />
+  <button id="filterBtn" class="btn btn-success">Filtrar</button>
+</div>
+
+<div class="chart-container">
+  <canvas id="historicoChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const leituras = JSON.parse("{{ leituras_json|escapejs }}");
+
+  // Formata label com dia + hora
+  const labels = leituras.map((l) => {
+    const date = new Date(l.timestamp);
+    return (
+      date.toLocaleDateString([], { day: "2-digit", month: "2-digit" }) +
+      " " +
+      date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    );
+  });
+  const temperaturas = leituras.map((l) => l.temperature);
+  const humidades = leituras.map((l) => l.humidity);
+
+  const ctx = document.getElementById("historicoChart").getContext("2d");
+  const historicoChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: "Temperatura (°C)",
+          data: temperaturas,
+          borderColor: "rgba(255, 99, 132, 1)",
+          backgroundColor: "rgba(255, 99, 132, 0.2)",
+          yAxisID: "y1",
+          tension: 0.3,
+        },
+        {
+          label: "Umidade (%)",
+          data: humidades,
+          borderColor: "rgba(54, 162, 235, 1)",
+          backgroundColor: "rgba(54, 162, 235, 0.2)",
+          yAxisID: "y2",
+          tension: 0.3,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      stacked: false,
+      scales: {
+        y1: {
+          type: "linear",
+          display: true,
+          position: "left",
+          title: { display: true, text: "Temperatura (°C)" },
+        },
+        y2: {
+          type: "linear",
+          display: true,
+          position: "right",
+          title: { display: true, text: "Umidade (%)" },
+          grid: { drawOnChartArea: false },
+        },
+        x: {
+          ticks: {
+            maxRotation: 45,
+            minRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: 10,
+          },
+        },
+      },
+    },
+  });
+
+  // Filtro por datas
+  document.getElementById("filterBtn").addEventListener("click", () => {
+    const start = document.getElementById("startDate").value;
+    const end = document.getElementById("endDate").value;
+    let url = `/historico/`;
+    if (start) url += `?start=${start}`;
+    if (end) url += start ? `&end=${end}` : `?end=${end}`;
+    window.location.href = url;
+  });
+</script>
+{% endblock %}
