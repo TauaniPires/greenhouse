@@ -199,8 +199,8 @@ def manual_control_api(request):
         control = _ensure_control()
 
         # Desativa o modo automático SOMENTE se ele estiver ativo
-        if control.automatic_mode:
-            control.automatic_mode = False
+        #if control.automatic_mode:
+        #    control.automatic_mode = False
 
         if action == 'open':
             control.curtain_is_open = True

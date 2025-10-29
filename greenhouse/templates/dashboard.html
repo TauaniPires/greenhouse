@@ -134,10 +134,11 @@
         id="auto-switch"
         {%
         if
-        control.auto_mode
+        control.automatic_mode
         %}checked{%
         endif
         %}
+        onchange="toggleAutomaticMode(this.checked)"
         onchange="toggleAutomaticMode(this.checked)"
       />
       <label class="form-check-label" for="autoModeSwitch">
@@ -280,7 +281,14 @@
 
   // Atualiza o estado inicial ao carregar a página
   document.addEventListener("DOMContentLoaded", () => {
-    updateInterfaceState();
+    fetch("{% url 'api_status' %}")
+      .then((res) => res.json())
+      .then((data) => {
+        const autoSwitch = document.getElementById("auto-switch");
+        autoSwitch.checked = data.automatic_mode; // garante que checkbox reflete o banco
+        updateInterfaceState(); // atualiza botões e campos
+      })
+      .catch((err) => console.error("Erro ao buscar estado automático:", err));
   });
 
   function updateManualButtonsState() {
