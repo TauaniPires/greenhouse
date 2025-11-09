@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import json
 import threading
 
-from .models import SensorReading, HourlyAverage, GreenhouseControl
+from .models import SensorReading, HourlyAverage, GreenhouseControl, CurtainLog
 
 # Guarda o timer ativo para evitar agendamentos duplicados
 timer_limpeza = None
@@ -18,7 +18,7 @@ def limpar_leituras_antigas():
     from .models import SensorReading
     limite = timezone.now() - timedelta(hours=1)
     apagados, _ = SensorReading.objects.filter(timestamp__lt=limite).delete()
-    print(f"🧹 {apagados} leituras antigas removidas (anteriores a {limite}).")
+    print(f" {apagados} leituras antigas removidas (anteriores a {limite}).")
 
     # Libera para novo agendamento
     global timer_limpeza
@@ -66,11 +66,12 @@ def historico(request):
         }
         for leitura in leituras
     ]
-
+    logs = CurtainLog.objects.order_by('-timestamp')[:50]  # mostra os 50 mais recentes
     context = {
         'leituras_json': json.dumps(dados),
         'start_date': start_date.strftime("%Y-%m-%d"),
         'end_date': end_date.strftime("%Y-%m-%d"),
+        'logs': logs, 
     }
 
     return render(request, 'historico.html', context)
@@ -83,11 +84,24 @@ def get_status_api(request):
 
     # Se o modo automático estiver ativo - atualiza automaticamente
     if latest and control.automatic_mode:
+        prev_state = control.curtain_is_open  # guarda o estado anterior
+
+        # lógica de abertura/fechamento automática
         if latest.temperature < control.min_temperature or latest.temperature > control.max_temperature:
             control.curtain_is_open = False
         else:
             control.curtain_is_open = True
-        control.save()
+
+        # salva somente se o estado mudou
+        if control.curtain_is_open != prev_state:
+            control.save()
+            CurtainLog.objects.create(
+                action='open' if control.curtain_is_open else 'close',
+                temperature=latest.temperature,
+                humidity=latest.humidity,
+                triggered_by=None  # None indica modo automático
+            )
+
 
     # Garante que sempre devolve o estado atual (mesmo no modo manual)
     result = {
@@ -210,6 +224,13 @@ def manual_control_api(request):
             return JsonResponse({'success': False, 'message': 'Ação inválida.'}, status=400)
 
         control.save()
+        latest = SensorReading.objects.order_by('-timestamp').first()
+        CurtainLog.objects.create(
+            action=action,
+            temperature=latest.temperature if latest else 0,
+            humidity=latest.humidity if latest else 0,
+            triggered_by=request.user if request.user.is_authenticated else None,
+        )
         return JsonResponse({
             'success': True,
             'message': f'Cortina {"aberta" if control.curtain_is_open else "fechada"}',
@@ -218,4 +239,3 @@ def manual_control_api(request):
         })
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
-
