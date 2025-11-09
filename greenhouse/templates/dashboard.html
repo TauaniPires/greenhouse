@@ -2,87 +2,201 @@
 <div class="row g-4">
   <div class="col-lg-8">
     <div class="card shadow-sm mb-4">
-      <div class="card-header bg-white">
-        <h4 class="mb-0">Status Atual</h4>
+      <div class="card-header bg-white border-0 d-flex align-items-center">
+        <h4 class="mb-0">
+          <i class="bi bi-speedometer2 me-2"></i>Status Atual
+        </h4>
       </div>
+
       <div class="card-body">
         <div class="row text-center">
-          <div class="col-md-4">
+          <div class="col-md-4 mb-3">
             <div class="p-3">
-              <i class="bi bi-thermometer-sun fs-1 text-danger"></i>
-              <h2 class="mt-2"><span id="temp-display">--</span>°C</h2>
+              <i class="bi bi-thermometer-sun fs-1 text-temperatura"></i>
+              <h2 class="mt-2 fw-semibold text-dark">
+                <span id="temp-display">--</span>°C
+              </h2>
               <p class="text-muted mb-0">Temperatura</p>
             </div>
           </div>
-          <div class="col-md-4">
+
+          <div class="col-md-4 mb-3">
             <div class="p-3">
-              <i class="bi bi-droplet-half fs-1 text-primary"></i>
-              <h2 class="mt-2"><span id="humidity-display">--</span>%</h2>
+              <i class="bi bi-droplet-half fs-1 text-umidade"></i>
+              <h2 class="mt-2 fw-semibold text-dark">
+                <span id="humidity-display">--</span>%
+              </h2>
               <p class="text-muted mb-0">Umidade</p>
             </div>
           </div>
-          <div class="col-md-4">
-            <div class="p-3 status-card" id="curtain-status-card">
-              <i id="curtain-icon" class="fs-1"></i>
-              <h4 class="mt-2" id="curtain-status-text">--</h4>
+
+          <div class="col-md-4 mb-3">
+            <div class="p-3 status-card rounded-3" id="curtain-status-card">
+              <i id="curtain-icon" class="fs-1 text-aviso"></i>
+              <h4 class="mt-2 fw-semibold" id="curtain-status-text">--</h4>
               <p class="text-muted mb-0">Status da Cortina</p>
             </div>
           </div>
         </div>
+
         <div class="text-center text-muted mt-3">
-          <small
-            >Última atualização: <span id="last-update">--:--:--</span></small
-          >
+          <small>Última atualização: <span id="last-update"></span></small>
         </div>
 
-        <div class="mt-4 px-3">
+        <div class="mt-4 text-center">
           <a href="/historico" class="botao-historico">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="2"
-              stroke="currentColor"
-              class="icone"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
-              />
-            </svg>
-            <span>Ver histórico</span>
+            <i class="bi bi-bar-chart-fill me-2"></i> Ver histórico
           </a>
 
           <style>
-            .botao-historico {
-              display: flex; /* Garante que o item seja um bloco flexível */
-              justify-content: center; /* Centraliza o ícone e o texto */
-              width: 100%; /* Faz o botão ocupar 100% da largura do container */
-              align-items: center;
-              gap: 0.5rem;
-              background: linear-gradient(90deg, #4caf50, #81c784);
-              color: white;
-              font-weight: 600;
-              padding: 0.75rem 1.25rem;
-              border-radius: 12px;
-              text-decoration: none;
-              box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            /* === PALETA DE CORES === */
+            :root {
+              --cor-primaria: #4caf50; /* Verde principal */
+              --cor-primaria-hover: #45a049; /* Verde mais escuro para hover */
+              --cor-aviso: #f7b500; /* Amarelo/Laranja para botões de ação */
+              --cor-temperatura: #e53935; /* Vermelho para ícone de temperatura */
+              --cor-umidade: #1e88e5; /* Azul para ícone de umidade */
+
+              --cor-fundo: #f5f7f5;
+              --cor-fundo-card: #ffffff;
+              --cor-fundo-aberto: #e6f7ee; /* Fundo do card de status "Aberta" */
+              --cor-fundo-fechado: #fff7e6; /* Fundo do card de status "Fechada" */
+              --cor-borda: #e0e0e0;
+            }
+            /* ======================================= */
+            /* === ÍCONES COM CORES DA PALETA === */
+            .text-temperatura {
+              color: var(--cor-temperatura) !important;
+            }
+            .text-umidade {
+              color: var(--cor-umidade) !important;
+            }
+            .text-aviso {
+              color: var(--cor-aviso) !important;
+            }
+
+            /* === CARDS === */
+            .card {
+              border: none !important;
+              border-radius: 20px !important;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
               transition: transform 0.2s ease, box-shadow 0.2s ease;
             }
 
-            .botao-historico:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+            .card:hover {
+              transform: translateY(-3px);
+              box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
             }
 
-            .icone {
-              width: 24px;
-              height: 24px;
+            .card-header {
+              border-bottom: 2px solid var(--cor-primaria) !important;
+              border-radius: 20px 20px 0 0 !important;
+              background: var(--cor-fundo-card) !important;
+              padding: 1rem 1.5rem;
             }
-            #params-form:has(input:disabled) {
-              opacity: 0.6;
-              pointer-events: none;
+
+            .card-header h4,
+            .card-header h5 {
+              color: var(--cor-primaria);
+              font-weight: 600;
+              margin: 0;
+            }
+
+            /* === STATUS CARDS (temperatura, umidade, cortina) === */
+            .status-card {
+              background: #f8fdf8;
+              border-radius: 15px;
+              padding: 1rem;
+              transition: background 0.3s;
+            }
+
+            .status-card.open {
+              background: var(--cor-fundo-aberto);
+            }
+
+            .status-card.closed {
+              background: var(--cor-fundo-fechado);
+            }
+
+            /* === BOTÕES === */
+            .btn-success,
+            .btn-primary,
+            .btn-warning {
+              border: none;
+              border-radius: 10px !important;
+              font-weight: 600;
+            }
+            .btn-primary {
+              background-color: var(--cor-primaria) !important;
+            }
+
+            .btn-primary:hover {
+              background-color: var(--cor-primaria-hover) !important;
+            }
+
+            .btn-warning {
+              background-color: var(--cor-aviso) !important;
+            }
+
+            /* ===FORMULÁRIOS === */
+            .form-control {
+              border-radius: 12px !important;
+              border: 1px solid var(--cor-borda) !important;
+              padding: 0.8rem 1rem;
+              transition: border-color 0.2s, box-shadow 0.2s;
+            }
+
+            .form-control:focus {
+              border-color: var(--cor-primaria) !important;
+              box-shadow: 0 0 0 0.15rem rgba(75, 145, 42, 0.25) !important;
+            }
+
+            /* === SWITCH === */
+            .form-check-input:checked {
+              background-color: var(--cor-primaria) !important;
+              border-color: var(--cor-primaria) !important;
+            }
+
+            /* === HISTÓRICO === */
+            .botao-historico {
+              display: inline-flex;
+              justify-content: center;
+              align-items: center;
+              gap: 0.6rem;
+              background-color: var(--cor-primaria);
+              color: white !important;
+              font-weight: 600;
+              padding: 0.6rem 1.2rem;
+              font-size: 0.95rem;
+              border-radius: 12px;
+              text-decoration: none;
+              box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+              transition: all 0.2s ease;
+              margin: 0 auto;
+              display: block;
+              width: fit-content;
+            }
+
+            .botao-historico:hover {
+              background-color: var(--cor-primaria-hover);
+              transform: translateY(-2px);
+              box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+            }
+
+            /* === TÍTULOS GERAIS === */
+            h4,
+            h5 {
+              font-weight: 600;
+            }
+
+            /* === TEXTO DE STATUS === */
+            .text-muted {
+              font-size: 0.9rem;
+            }
+
+            /* === ÍCONES GRANDES === */
+            .fs-1 {
+              font-size: 2.5rem !important;
             }
           </style>
         </div>
@@ -139,7 +253,6 @@
         endif
         %}
         onchange="toggleAutomaticMode(this.checked)"
-        onchange="toggleAutomaticMode(this.checked)"
       />
       <label class="form-check-label" for="autoModeSwitch">
         Modo Automático
@@ -192,7 +305,7 @@
             latest.humidity.toFixed(1);
           document.getElementById("last-update").textContent = new Date(
             latest.timestamp
-          ).toLocaleTimeString();
+          ).toLocaleString();
         }
 
         const statusCard = document.getElementById("curtain-status-card");
@@ -201,12 +314,12 @@
 
         if (data.curtain_is_open) {
           statusText.textContent = "Aberta";
-          statusIcon.className = "bi bi-unlock-fill fs-1 text-primary";
+          statusIcon.className = "bi bi-unlock-fill fs-1 text-umidade";
           statusCard.classList.remove("closed");
           statusCard.classList.add("open");
         } else {
           statusText.textContent = "Fechada";
-          statusIcon.className = "bi bi-lock-fill fs-1 text-warning";
+          statusIcon.className = "bi bi-lock-fill fs-1 text-aviso";
           statusCard.classList.remove("open");
           statusCard.classList.add("closed");
         }
@@ -240,9 +353,9 @@
           );
           updateStatus(); // Atualiza o dashboard imediatamente
           updateManualButtonsState();
-          setInterval(updateStatus, 5000);
         });
     });
+
   function toggleAutomaticMode(isAutomatic) {
     fetch("{% url 'toggle_automatic_mode' %}", {
       method: "POST",
@@ -260,7 +373,7 @@
             : "Modo manual ativado",
           "success"
         );
-        updateInterfaceState(); // <-- Atualiza tudo com uma única função
+        updateInterfaceState();
       })
       .catch(() => showToast("Erro ao alternar o modo", "danger"));
   }

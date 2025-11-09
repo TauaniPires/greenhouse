@@ -1,0 +1,77 @@
+/* === ESTILOS GLOBAIS === */
+
+/* Paleta de cores principal */
+:root {
+  --cor-primaria: #4caf50;
+  --cor-primaria-hover: #45a049;
+  --cor-aviso: #f7b500;
+  --cor-temperatura: #e53935;
+  --cor-umidade: #1e88e5;
+  --cor-fundo: #f5f7f5;
+  --cor-borda: #e0e0e0;
+}
+
+/* Corpo padrão */
+body {
+  font-family: "Poppins", sans-serif;
+  background-color: var(--cor-fundo) !important;
+}
+
+/* Navbar */
+.navbar {
+  background-color: var(--cor-primaria) !important;
+}
+
+.navbar-brand {
+  font-weight: 600;
+}
+
+.navbar-text {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #ffffff !important;
+}
+
+/* Botões padrão */
+.btn-primary {
+  background-color: var(--cor-primaria) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background-color: var(--cor-primaria-hover) !important;
+}
+
+.btn-warning {
+  background-color: var(--cor-aviso) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  font-weight: 600;
+}
+
+/* Formulários */
+.form-control {
+  border-radius: 12px !important;
+  border: 1px solid var(--cor-borda) !important;
+  padding: 0.8rem 1rem;
+}
+
+.form-control:focus {
+  border-color: var(--cor-primaria) !important;
+  box-shadow: 0 0 0 0.15rem rgba(75, 145, 42, 0.25) !important;
+}
+
+/* Ícones */
+.text-temperatura {
+  color: var(--cor-temperatura) !important;
+}
+
+.text-umidade {
+  color: var(--cor-umidade) !important;
+}
+
+.text-aviso {
+  color: var(--cor-aviso) !important;
+}

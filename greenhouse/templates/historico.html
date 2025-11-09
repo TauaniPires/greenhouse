@@ -1,26 +1,33 @@
 {% extends 'base.html' %} {% block content %}
 <style>
-  /* Container do título e seta */
+  :root {
+    --cor-primaria: #4caf50;
+    --cor-primaria-hover: #45a049;
+    --cor-aviso: #f7b500;
+    --cor-temperatura: #e53935;
+    --cor-umidade: #1e88e5;
+    --cor-borda: #e0e0e0;
+  }
   .title-container {
     position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
     margin-top: 20px;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
     width: 100%;
   }
   .back-arrow {
     position: absolute;
     left: 20px;
-    font-size: 40px;
-    color: #28a745;
+    font-size: 2.5rem;
+    color: var(--cor-primaria);
     font-weight: bold;
     text-decoration: none;
     transition: color 0.2s;
   }
   .back-arrow:hover {
-    color: #218838;
+    color: var(--cor-primaria-hover);
   }
   h2 {
     margin: 5px 0;
@@ -29,30 +36,47 @@
     text-align: center;
   }
 
-  /* Barra de filtros */
   .filter-bar {
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-wrap: wrap; /* Permite quebrar a linha se necessário */
-    gap: 10px; /* Espaço entre elementos */
-    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px; /* Mais espaço */
+    margin-bottom: 25px;
   }
   .filter-bar label {
-    font-weight: bold;
+    font-weight: 600;
     margin-right: 5px;
-    font-size: 16px;
-  }
-  .filter-bar input {
-    padding: 5px 12px;
-    font-size: 16px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    background-color: #f8f9fa;
-    cursor: pointer;
+    font-size: 1rem;
   }
 
-  /* Gráfico responsivo */
+  .filter-bar input[type="date"] {
+    padding: 0.6rem 1rem;
+    font-size: 1rem;
+    border-radius: 12px !important;
+    border: 1px solid var(--cor-borda) !important;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .filter-bar input[type="date"]:focus {
+    border-color: var(--cor-primaria) !important;
+    box-shadow: 0 0 0 0.15rem rgba(75, 145, 42, 0.25) !important;
+  }
+
+  .filter-bar button {
+    background-color: var(--cor-primaria) !important;
+    border: none;
+    border-radius: 10px !important;
+    font-weight: 600;
+    color: white;
+    padding: 0.6rem 1rem;
+    transition: background-color 0.2s;
+  }
+  .filter-bar button:hover {
+    background-color: var(--cor-primaria-hover) !important;
+  }
+
   .chart-container {
     position: relative;
     width: 100%;
@@ -66,40 +90,36 @@
     }
   }
 
-  /* Responsivo para celular */
   @media (max-width: 600px) {
     .filter-bar {
       flex-direction: column;
-      align-items: flex-start;
+      align-items: stretch;
     }
     .title-container {
       flex-direction: column;
-      align-items: flex-start;
+      align-items: center;
       margin-top: 10px;
     }
     .back-arrow {
       position: static;
-      margin-bottom: 5px;
+      margin-bottom: 10px;
       font-size: 36px;
-    }
-    h2 {
-      font-size: 1.2rem;
       text-align: center;
     }
-    .filter-bar input {
-      font-size: 10px;
-      padding: 4px 6px;
-      margin-bottom: 5px;
+    h2 {
+      font-size: 1.5rem;
+      text-align: center;
     }
     .filter-bar label,
     .filter-bar input,
     .filter-bar button {
-      width: 100%; /* Ocupa toda a largura */
+      width: 100%;
       font-size: 14px;
-    }
-    .filter-bar button {
       text-align: center;
-      padding: 4px 6px;
+    }
+    .filter-bar label {
+      text-align: left;
+      margin-bottom: -10px;
     }
   }
 </style>
@@ -114,7 +134,8 @@
   <input type="date" id="startDate" value="{{ start_date }}" />
   <label for="endDate">Data Final:</label>
   <input type="date" id="endDate" value="{{ end_date }}" />
-  <button id="filterBtn" class="btn btn-success">Filtrar</button>
+
+  <button id="filterBtn">Filtrar</button>
 </div>
 
 <div class="chart-container">
@@ -125,7 +146,6 @@
 <script>
   const leituras = JSON.parse("{{ leituras_json|escapejs }}");
 
-  // Formata label com dia + hora
   const labels = leituras.map((l) => {
     const date = new Date(l.timestamp);
     return (
@@ -137,6 +157,11 @@
   const temperaturas = leituras.map((l) => l.temperature);
   const humidades = leituras.map((l) => l.humidity);
 
+  const corTemperatura = "rgba(229, 57, 53, 1)";
+  const corTemperaturaBg = "rgba(229, 57, 53, 0.2)";
+  const corUmidade = "rgba(30, 136, 229, 1)";
+  const corUmidadeBg = "rgba(30, 136, 229, 0.2)";
+
   const ctx = document.getElementById("historicoChart").getContext("2d");
   const historicoChart = new Chart(ctx, {
     type: "line",
@@ -146,16 +171,16 @@
         {
           label: "Temperatura (°C)",
           data: temperaturas,
-          borderColor: "rgba(255, 99, 132, 1)",
-          backgroundColor: "rgba(255, 99, 132, 0.2)",
+          borderColor: corTemperatura,
+          backgroundColor: corTemperaturaBg,
           yAxisID: "y1",
           tension: 0.3,
         },
         {
           label: "Umidade (%)",
           data: humidades,
-          borderColor: "rgba(54, 162, 235, 1)",
-          backgroundColor: "rgba(54, 162, 235, 0.2)",
+          borderColor: corUmidade,
+          backgroundColor: corUmidadeBg,
           yAxisID: "y2",
           tension: 0.3,
         },
