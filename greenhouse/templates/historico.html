@@ -192,8 +192,10 @@
         <td>
           {% if log.action == "open" %}
           <span class="text-success fw-semibold">Aberta</span>
+          {% elif log.action == "close" %}
+          <span class="text-danger fw-semibold">Fechada</span>
           {% else %}
-          <span class="text-warning fw-semibold">Fechada</span>
+          <span class="text-warning fw-semibold">Parada</span>
           {% endif %}
         </td>
         <td>{{ log.temperature|floatformat:1 }}</td>

@@ -198,6 +198,29 @@
             .fs-1 {
               font-size: 2.5rem !important;
             }
+            /* Corrige bordas dos botões dentro do grupo */
+            .btn-group .btn {
+              border-radius: 12px !important; /* deixa todos arredondados */
+              margin: 0 1px; /* dá um pequeno espaçamento entre eles */
+            }
+
+            /* Remove a fusão de bordas padrão do Bootstrap */
+            .btn-group {
+              gap: 0 !important;
+            }
+            .status-card.paused {
+              background: #fffbe6; /* amarelo clarinho */
+              animation: blink 1.5s infinite alternate;
+            }
+
+            @keyframes blink {
+              from {
+                box-shadow: 0 0 0px rgba(255, 193, 7, 0.4);
+              }
+              to {
+                box-shadow: 0 0 12px rgba(255, 193, 7, 0.8);
+              }
+            }
           </style>
         </div>
       </div>
@@ -267,14 +290,23 @@
         <div class="btn-group w-100">
           <button
             id="btn-open"
-            class="btn btn-primary btn-lg"
+            class="btn btn-success btn-lg"
             onclick="manualControl('open')"
           >
             <i class="bi bi-arrow-up-circle"></i> Abrir
           </button>
+
+          <button
+            id="btn-stop"
+            class="btn btn-warning btn-lg"
+            onclick="manualControl('stop')"
+          >
+            <i class="bi bi-pause-circle"></i> Parar
+          </button>
+
           <button
             id="btn-close"
-            class="btn btn-warning btn-lg"
+            class="btn btn-danger btn-lg"
             onclick="manualControl('close')"
           >
             <i class="bi bi-arrow-down-circle"></i> Fechar
@@ -311,17 +343,23 @@
         const statusCard = document.getElementById("curtain-status-card");
         const statusText = document.getElementById("curtain-status-text");
         const statusIcon = document.getElementById("curtain-icon");
+        const curtainStatus =
+          data.curtain_status || (data.curtain_is_open ? "open" : "close");
 
-        if (data.curtain_is_open) {
+        statusCard.classList.remove("open", "closed", "paused");
+
+        if (curtainStatus === "open") {
           statusText.textContent = "Aberta";
           statusIcon.className = "bi bi-unlock-fill fs-1 text-umidade";
-          statusCard.classList.remove("closed");
           statusCard.classList.add("open");
-        } else {
+        } else if (curtainStatus === "close") {
           statusText.textContent = "Fechada";
           statusIcon.className = "bi bi-lock-fill fs-1 text-aviso";
-          statusCard.classList.remove("open");
           statusCard.classList.add("closed");
+        } else if (curtainStatus === "stop") {
+          statusText.textContent = "Pausada";
+          statusIcon.className = "bi bi-pause-circle-fill fs-1 text-warning";
+          statusCard.classList.add("paused");
         }
       })
       .catch((error) => console.error("Erro ao buscar status:", error));
@@ -385,6 +423,7 @@
     // Botões de controle manual ficam desativados no modo automático
     document.getElementById("btn-open").disabled = isAuto;
     document.getElementById("btn-close").disabled = isAuto;
+    document.getElementById("btn-stop").disabled = isAuto;
 
     // Campos de parâmetros ficam desativados no modo manual
     document.getElementById("min-temp").disabled = !isAuto;

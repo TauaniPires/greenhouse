@@ -66,7 +66,7 @@ def historico(request):
         }
         for leitura in leituras
     ]
-    logs = CurtainLog.objects.order_by('-timestamp')[:50]  # mostra os 50 mais recentes
+    logs = CurtainLog.objects.order_by('-timestamp')[:10]  # mostra os 50 mais recentes
     context = {
         'leituras_json': json.dumps(dados),
         'start_date': start_date.strftime("%Y-%m-%d"),
@@ -81,6 +81,9 @@ def historico(request):
 def get_status_api(request):
     control = _ensure_control()
     latest = SensorReading.objects.order_by('-timestamp').first()
+    last_log = CurtainLog.objects.order_by('-timestamp').first()
+    curtain_status = control.curtain_status
+
 
     # Se o modo automático estiver ativo - atualiza automaticamente
     if latest and control.automatic_mode:
@@ -109,6 +112,7 @@ def get_status_api(request):
         'automatic_mode': bool(control.automatic_mode),
         'min_temperature': control.min_temperature,
         'max_temperature': control.max_temperature,
+        'curtain_status': curtain_status,
         'latest_reading': None
     }
 
@@ -218,8 +222,15 @@ def manual_control_api(request):
 
         if action == 'open':
             control.curtain_is_open = True
+            control.curtain_status = 'open'
+            action_label = "aberta"
         elif action == 'close':
             control.curtain_is_open = False
+            control.curtain_status = 'close'
+            action_label = "fechada"
+        elif action == 'stop':
+            control.curtain_status = 'stop'
+            action_label = "parada"
         else:
             return JsonResponse({'success': False, 'message': 'Ação inválida.'}, status=400)
 
@@ -233,7 +244,8 @@ def manual_control_api(request):
         )
         return JsonResponse({
             'success': True,
-            'message': f'Cortina {"aberta" if control.curtain_is_open else "fechada"}',
+            'message': f'Cortina {action_label}',
+            'curtain_status': action,
             'curtain_is_open': control.curtain_is_open,
             'automatic_mode': control.automatic_mode
         })

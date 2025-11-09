@@ -25,6 +25,7 @@ class GreenhouseControl(models.Model):
     min_temperature = models.FloatField(default=22.0)
     max_temperature = models.FloatField(default=30.0)
     curtain_is_open = models.BooleanField(default=False)
+    curtain_status = models.CharField(max_length=10, default='stop')
     automatic_mode = models.BooleanField(default=True)
     singleton = models.BooleanField(default=True, editable=False, unique=True)
 
@@ -35,6 +36,7 @@ class GreenhouseControl(models.Model):
 class CurtainLog(models.Model):
     ACTION_CHOICES = [
         ('open', 'Aberta'),
+        ('stop', 'Parada'),
         ('close', 'Fechada'),
     ]
 
