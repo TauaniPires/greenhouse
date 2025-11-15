@@ -92,8 +92,10 @@ def get_status_api(request):
         # lógica de abertura/fechamento automática
         if latest.temperature < control.min_temperature or latest.temperature > control.max_temperature:
             control.curtain_is_open = False
+            control.curtain_status = 'close'
         else:
             control.curtain_is_open = True
+            control.curtain_status = 'open'
 
         # salva somente se o estado mudou
         if control.curtain_is_open != prev_state:
