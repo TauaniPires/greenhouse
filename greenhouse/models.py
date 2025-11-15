@@ -28,6 +28,8 @@ class GreenhouseControl(models.Model):
     curtain_status = models.CharField(max_length=10, default='stop')
     automatic_mode = models.BooleanField(default=True)
     singleton = models.BooleanField(default=True, editable=False, unique=True)
+    last_esp_ping = models.DateTimeField(null=True, blank=True)
+
 
     def __str__(self):
         status = "Aberta" if self.curtain_is_open else "Fechada"

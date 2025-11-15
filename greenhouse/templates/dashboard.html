@@ -326,25 +326,46 @@
   const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
 
   function updateStatus() {
-    fetch("{% url 'api_status' %}")
+    fetch("{% url 'api_status' %}?device=browser")
       .then((response) => response.json())
       .then((data) => {
-        const latest = data.latest_reading;
-        if (latest) {
+        if (data.latest_reading) {
           document.getElementById("temp-display").textContent =
-            latest.temperature.toFixed(1);
+            data.latest_reading.temperature.toFixed(1);
+
           document.getElementById("humidity-display").textContent =
-            latest.humidity.toFixed(1);
-          document.getElementById("last-update").textContent = new Date(
-            latest.timestamp
-          ).toLocaleString();
+            data.latest_reading.humidity.toFixed(1);
+
+          const dt = new Date(data.latest_reading.timestamp);
+          document.getElementById("last-update").textContent =
+            dt.toLocaleString("pt-BR");
+        } else {
+          document.getElementById("temp-display").textContent = "--";
+          document.getElementById("humidity-display").textContent = "--";
+          document.getElementById("last-update").textContent = "--";
         }
+        // --- ESP OFFLINE ---
+        if (!data.esp_online) {
+          document.getElementById("curtain-status-text").textContent =
+            "ESP Offline";
+          document.getElementById("curtain-icon").className =
+            "bi bi-wifi-off fs-1 text-danger";
+
+          // Desativa botões
+          document.getElementById("btn-open").disabled = true;
+          document.getElementById("btn-close").disabled = true;
+          document.getElementById("btn-stop").disabled = true;
+
+          showToast("ESP32 está offline — comandos desativados!", "danger");
+          return;
+        }
+
+        // --- ESP Online (segue normal) ---
+        const curtainStatus = data.curtain_status;
 
         const statusCard = document.getElementById("curtain-status-card");
         const statusText = document.getElementById("curtain-status-text");
         const statusIcon = document.getElementById("curtain-icon");
-        const curtainStatus =
-          data.curtain_status || (data.curtain_is_open ? "open" : "close");
 
         statusCard.classList.remove("open", "closed", "paused");
 
@@ -357,12 +378,17 @@
           statusIcon.className = "bi bi-lock-fill fs-1 text-aviso";
           statusCard.classList.add("closed");
         } else if (curtainStatus === "stop") {
-          statusText.textContent = "Pausada";
+          statusText.textContent = "Parada";
           statusIcon.className = "bi bi-pause-circle-fill fs-1 text-warning";
           statusCard.classList.add("paused");
         }
-      })
-      .catch((error) => console.error("Erro ao buscar status:", error));
+
+        // reabilita botões se não estiver no automático
+        let isAuto = data.automatic_mode;
+        document.getElementById("btn-open").disabled = isAuto;
+        document.getElementById("btn-close").disabled = isAuto;
+        document.getElementById("btn-stop").disabled = isAuto;
+      });
   }
 
   document
@@ -433,7 +459,7 @@
 
   // Atualiza o estado inicial ao carregar a página
   document.addEventListener("DOMContentLoaded", () => {
-    fetch("{% url 'api_status' %}")
+    fetch("{% url 'api_status' %}?device=browser")
       .then((res) => res.json())
       .then((data) => {
         const autoSwitch = document.getElementById("auto-switch");

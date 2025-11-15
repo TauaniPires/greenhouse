@@ -31,6 +31,12 @@ def _ensure_control():
         control = GreenhouseControl.objects.create()
     return control
 
+def esp_online(control):
+    """Retorna True se o ESP enviou ping nos últimos 20 segundos."""
+    if not control.last_esp_ping:
+        return False
+    return (timezone.now() - control.last_esp_ping).total_seconds() < 20
+
 @login_required
 def dashboard_view(request):
     control = _ensure_control()
@@ -80,9 +86,17 @@ def historico(request):
 # ---------- API de status ----------
 def get_status_api(request):
     control = _ensure_control()
+    
+    device = request.GET.get("device")
+
+    # Apenas o ESP32 deve atualizar o heartbeat!
+    if device == "esp32":
+        control.last_esp_ping = timezone.now()
+        control.save(update_fields=["last_esp_ping"])
+
+
+
     latest = SensorReading.objects.order_by('-timestamp').first()
-    last_log = CurtainLog.objects.order_by('-timestamp').first()
-    curtain_status = control.curtain_status
 
 
     # Se o modo automático estiver ativo - atualiza automaticamente
@@ -110,13 +124,15 @@ def get_status_api(request):
 
     # Garante que sempre devolve o estado atual (mesmo no modo manual)
     result = {
-        'curtain_is_open': bool(control.curtain_is_open),
-        'automatic_mode': bool(control.automatic_mode),
-        'min_temperature': control.min_temperature,
-        'max_temperature': control.max_temperature,
-        'curtain_status': curtain_status,
-        'latest_reading': None
+        "curtain_is_open": bool(control.curtain_is_open),
+        "automatic_mode": bool(control.automatic_mode),
+        "min_temperature": control.min_temperature,
+        "max_temperature": control.max_temperature,
+        "curtain_status": control.curtain_status,  # CORRIGIDO AQUI
+        "esp_online": esp_online(control),
+        "latest_reading": None,
     }
+
 
     if latest:
         result['latest_reading'] = {
@@ -213,6 +229,15 @@ def toggle_automatic_mode(request):
 @login_required
 @require_POST
 def manual_control_api(request):
+    control = _ensure_control()
+
+    # Bloquear se o ESP estiver offline
+    if not esp_online(control):
+        return JsonResponse({
+            "success": False,
+            "message": "O ESP32 está offline — comandos desativados.",
+            "esp_online": False,
+        })
     try:
         payload = json.loads(request.body)
         action = payload.get('action')
