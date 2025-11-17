@@ -34,6 +34,14 @@
             <div class="p-3 status-card rounded-3" id="curtain-status-card">
               <i id="curtain-icon" class="fs-1 text-aviso"></i>
               <h4 class="mt-2 fw-semibold" id="curtain-status-text">--</h4>
+              <p
+                id="curtain-movement-text"
+                class="text-secondary mt-1"
+                style="font-size: 0.9rem"
+              >
+                --
+              </p>
+
               <p class="text-muted mb-0">Status da Cortina</p>
             </div>
           </div>
@@ -360,26 +368,44 @@
           return;
         }
 
-        // --- ESP Online (segue normal) ---
-        const curtainStatus = data.curtain_status;
-
+        // --- ESP Online ---
         const statusCard = document.getElementById("curtain-status-card");
         const statusText = document.getElementById("curtain-status-text");
         const statusIcon = document.getElementById("curtain-icon");
 
+        // POSIÇÃO REAL (aberto / fechado)
+        const isOpen = data.curtain_is_open;
+
+        // MOVIMENTO (abrindo / fechando / parado)
+        const movement = data.curtain_status;
+        const movementText = document.getElementById("curtain-movement-text");
+
+        if (movement === "open") {
+          movementText.textContent = "Movimento: Abrindo 🔼";
+        } else if (movement === "close") {
+          movementText.textContent = "Movimento: Fechando 🔽";
+        } else if (movement === "stop") {
+          movementText.textContent = "Movimento: Parada ⏸️";
+        } else {
+          movementText.textContent = "Movimento: --";
+        }
+
+        // Reset classes
         statusCard.classList.remove("open", "closed", "paused");
 
-        if (curtainStatus === "open") {
+        // --- EXIBE A POSIÇÃO REAL ---
+        if (isOpen) {
           statusText.textContent = "Aberta";
           statusIcon.className = "bi bi-unlock-fill fs-1 text-umidade";
           statusCard.classList.add("open");
-        } else if (curtainStatus === "close") {
+        } else {
           statusText.textContent = "Fechada";
           statusIcon.className = "bi bi-lock-fill fs-1 text-aviso";
           statusCard.classList.add("closed");
-        } else if (curtainStatus === "stop") {
-          statusText.textContent = "Parada";
-          statusIcon.className = "bi bi-pause-circle-fill fs-1 text-warning";
+        }
+
+        // --- ESTÉTICA DE MOVIMENTO--
+        if (movement !== "stop") {
           statusCard.classList.add("paused");
         }
 

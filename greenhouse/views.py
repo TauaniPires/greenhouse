@@ -89,59 +89,77 @@ def get_status_api(request):
     
     device = request.GET.get("device")
 
-    # Apenas o ESP32 deve atualizar o heartbeat!
+    # Apenas o ESP32 atualiza o heartbeat
     if device == "esp32":
         control.last_esp_ping = timezone.now()
         control.save(update_fields=["last_esp_ping"])
 
-
-
     latest = SensorReading.objects.order_by('-timestamp').first()
 
-
-    # Se o modo automático estiver ativo - atualiza automaticamente
+# ----- MODO AUTOMÁTICO -----
     if latest and control.automatic_mode:
-        prev_state = control.curtain_is_open  # guarda o estado anterior
 
-        # lógica de abertura/fechamento automática
-        if latest.temperature < control.min_temperature or latest.temperature > control.max_temperature:
-            control.curtain_is_open = False
-            control.curtain_status = 'close'
+        temperatura = latest.temperature
+        min_t = control.min_temperature
+        max_t = control.max_temperature
+
+        should_be_open = min_t <= temperatura <= max_t
+
+        # Guarda o estado anterior
+        estado_anterior_aberta = control.curtain_is_open
+        estado_anterior_status = control.curtain_status
+
+        # --- 1) Se está em STOP ---
+        if control.curtain_status == "stop":
+
+            # Se já está na posição desejada → não muda nada
+            if should_be_open == control.curtain_is_open:
+                pass
+            else:
+                # temperatura pede movimento
+                if should_be_open:
+                    control.curtain_status = "open"
+                else:
+                    control.curtain_status = "close"
+
+        # --- 2) Lógica normal fora do STOP ---
         else:
-            control.curtain_is_open = True
-            control.curtain_status = 'open'
+            if should_be_open:
+                control.curtain_is_open = True
+                control.curtain_status = "open"
+            else:
+                control.curtain_is_open = False
+                control.curtain_status = "close"
 
-        # salva somente se o estado mudou
-        if control.curtain_is_open != prev_state:
+        #  Só salva SE algo realmente mudou
+        if (
+            estado_anterior_aberta != control.curtain_is_open or
+            estado_anterior_status != control.curtain_status
+        ):
             control.save()
-            CurtainLog.objects.create(
-                action='open' if control.curtain_is_open else 'close',
-                temperature=latest.temperature,
-                humidity=latest.humidity,
-                triggered_by=None  # None indica modo automático
-            )
 
 
-    # Garante que sempre devolve o estado atual (mesmo no modo manual)
+
+    # ----- RESPOSTA DO STATUS -----
     result = {
         "curtain_is_open": bool(control.curtain_is_open),
         "automatic_mode": bool(control.automatic_mode),
         "min_temperature": control.min_temperature,
         "max_temperature": control.max_temperature,
-        "curtain_status": control.curtain_status,  # CORRIGIDO AQUI
+        "curtain_status": control.curtain_status,
         "esp_online": esp_online(control),
         "latest_reading": None,
     }
 
-
     if latest:
-        result['latest_reading'] = {
-            'temperature': latest.temperature,
-            'humidity': latest.humidity,
-            'timestamp': latest.timestamp.isoformat()
+        result["latest_reading"] = {
+            "temperature": latest.temperature,
+            "humidity": latest.humidity,
+            "timestamp": latest.timestamp.isoformat(),
         }
 
     return JsonResponse(result)
+
 
 # ---------- Recebe leituras do ESP32 ----------
 @csrf_exempt
@@ -256,11 +274,18 @@ def manual_control_api(request):
             control.curtain_status = 'close'
             action_label = "fechada"
         elif action == 'stop':
+            # STOP enviado após término do movimento
+            # Ajusta posição final conforme o movimento anterior
+            if control.curtain_status == "open":
+                control.curtain_is_open = True   # terminou de abrir
+            elif control.curtain_status == "close":
+                control.curtain_is_open = False  # terminou de fechar    
             control.curtain_status = 'stop'
             action_label = "parada"
         else:
             return JsonResponse({'success': False, 'message': 'Ação inválida.'}, status=400)
 
+        control.automatic_mode = False
         control.save()
         latest = SensorReading.objects.order_by('-timestamp').first()
         CurtainLog.objects.create(
@@ -278,3 +303,87 @@ def manual_control_api(request):
         })
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
+# ---------- Controle da cortina vindo do ESP32 (sem login e sem CSRF) ----------
+@csrf_exempt
+@require_POST
+def manual_control_esp_api(request):
+    control = _ensure_control()
+
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+        action = payload.get("action")
+
+        # Determina final_action por padrão
+        final_action = action
+
+        if action == "open":
+            control.curtain_is_open = True
+            control.curtain_status = "open"
+            control.automatic_mode = False   # DESLIGA automático quando ESP manda open
+            final_action = "open"
+
+        elif action == "close":
+            control.curtain_is_open = False
+            control.curtain_status = "close"
+            control.automatic_mode = False   # DESLIGA automático quando ESP manda close
+            final_action = "close"
+
+        elif action == "stop":
+            # STOP enviado pelo ESP após término do movimento
+            if control.curtain_status == "open":
+                control.curtain_is_open = True
+                final_action = "open"
+            elif control.curtain_status == "close":
+                control.curtain_is_open = False
+                final_action = "close"
+            else:
+                final_action = "stop"
+
+            control.curtain_status = "stop"
+            control.automatic_mode = False
+
+        else:
+            return JsonResponse({"success": False, "message": "Ação inválida."}, status=400)
+
+        control.save()
+
+        # ---- evita logs duplicados ----
+        # pega último log e ignora se for o mesmo action nos últimos N segundos
+        from django.utils import timezone as dj_timezone
+        janela_segundos = 5
+        ultimo_log = CurtainLog.objects.order_by("-timestamp").first()
+        criar_log = True
+
+        # Não loga se a ação final é igual à posição atual DA MESMA FORMA
+        if ultimo_log and ultimo_log.action == final_action:
+            criar_log = False
+
+        # EVITA LOGAR 'open' ou 'close' vindo do STOP se não houve mudança real
+        # Ex: usuário já havia fechado e STOP só confirmou
+        estado_atual = control.curtain_is_open
+        if final_action == "open" and estado_atual is True:
+            criar_log = False
+
+        if final_action == "close" and estado_atual is False:
+            criar_log = False
+
+        # Cria log apenas se realmente mudou
+        if criar_log:
+            latest = SensorReading.objects.order_by("-timestamp").first()
+            CurtainLog.objects.create(
+                action=final_action,
+                temperature=latest.temperature if latest else 0,
+                humidity=latest.humidity if latest else 0,
+                triggered_by=None
+            )
+
+        return JsonResponse({
+            "success": True,
+            "curtain_status": control.curtain_status,
+            "curtain_is_open": control.curtain_is_open,
+            "automatic_mode": control.automatic_mode,
+        })
+
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
+

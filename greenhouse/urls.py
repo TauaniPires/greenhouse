@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from .views import manual_control_esp_api
+
 
 urlpatterns = [
     path('dashboard/', views.dashboard_view, name='dashboard'),
@@ -9,4 +11,5 @@ urlpatterns = [
     path('api/sensor/', views.sensor_data_api, name='api_sensor_data'),
     path('historico/', views.historico, name='historico'),
     path('api/toggle_automatic_mode/', views.toggle_automatic_mode, name='toggle_automatic_mode'),
+    path("api/manual-control-esp/", manual_control_esp_api),
 ]
