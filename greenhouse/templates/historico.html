@@ -1,4 +1,5 @@
 {% extends 'base.html' %} {% block content %}
+
 <style>
   :root {
     --cor-primaria: #4caf50;
@@ -9,7 +10,6 @@
     --cor-borda: #e0e0e0;
   }
 
-  /* garante que a página role normalmente */
   html,
   body {
     height: auto;
@@ -17,7 +17,6 @@
     background-color: #f5f7f5;
   }
 
-  /* ===== TÍTULO E BOTÃO VOLTAR ===== */
   .title-container {
     position: relative;
     display: flex;
@@ -50,7 +49,6 @@
     text-decoration: underline;
   }
 
-  /* ===== FILTROS ===== */
   .filter-bar {
     display: flex;
     justify-content: center;
@@ -58,12 +56,6 @@
     gap: 10px;
     flex-wrap: wrap;
     margin-bottom: 20px;
-    text-align: center;
-  }
-
-  .filter-bar label {
-    font-weight: 600;
-    font-size: 0.9rem;
   }
 
   .filter-bar input[type="date"] {
@@ -72,40 +64,25 @@
     border-radius: 10px !important;
     border: 1px solid var(--cor-borda) !important;
     background-color: #f8f9fa;
-    cursor: pointer;
     max-width: 160px;
   }
 
-  .filter-bar input[type="date"]:focus {
-    border-color: var(--cor-primaria) !important;
-    box-shadow: 0 0 0 0.1rem rgba(75, 145, 42, 0.25) !important;
-  }
-
   .filter-bar button {
-    background-color: var(--cor-primaria) !important;
-    border: none;
-    border-radius: 8px !important;
-    font-weight: 600;
+    background-color: var(--cor-primaria);
     color: white;
     padding: 0.4rem 1rem;
-    font-size: 0.9rem;
-    transition: background-color 0.2s;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
   }
 
-  .filter-bar button:hover {
-    background-color: var(--cor-primaria-hover) !important;
-  }
-
-  /* ===== GRÁFICO ===== */
   .chart-container {
     position: relative;
     width: 100%;
-    max-width: 100%;
     height: 350px;
     margin: 0 auto;
   }
 
-  /* ===== TABELA ===== */
   .table {
     font-size: 0.9rem;
   }
@@ -113,54 +90,36 @@
   .table thead th {
     background-color: var(--cor-primaria);
     color: white;
-    border-color: #ddd;
   }
 
-  .table td,
-  .table th {
-    vertical-align: middle;
-  }
-
-  /* ===== RESPONSIVO ===== */
   @media (max-width: 600px) {
     .btn-voltar {
       width: 100%;
       text-align: left;
     }
-
     .filter-bar {
       flex-direction: column;
-      align-items: center; /* centraliza horizontalmente */
-      justify-content: center;
-      text-align: center;
       width: 100%;
     }
-
-    .filter-bar label {
-      width: auto;
-      text-align: center;
-      margin-bottom: -4px;
-    }
-
     .filter-bar input[type="date"],
     .filter-bar button {
-      width: 80%; /* deixa os inputs e o botão centralizados e mais estreitos */
+      width: 80%;
       max-width: 300px;
-      text-align: center;
     }
   }
 </style>
 
 <div class="title-container">
-  <a href="{% url 'dashboard' %}" class="btn-voltar"
-    ><i class="bi bi-arrow-left"></i> Voltar</a
-  >
+  <a href="{% url 'dashboard' %}" class="btn-voltar">
+    <i class="bi bi-arrow-left"></i> Voltar
+  </a>
   <h2>Histórico de Temperatura e Umidade</h2>
 </div>
 
 <div class="filter-bar">
   <label for="startDate">Data Inicial:</label>
   <input type="date" id="startDate" value="{{ start_date }}" />
+
   <label for="endDate">Data Final:</label>
   <input type="date" id="endDate" value="{{ end_date }}" />
 
@@ -170,6 +129,7 @@
 <div class="chart-container">
   <canvas id="historicoChart"></canvas>
 </div>
+
 <hr class="my-5" />
 
 <h2 class="text-center mt-5">Histórico de Ações da Cortina</h2>
@@ -179,7 +139,9 @@
     <thead class="table-success">
       <tr>
         <th>Data e Hora</th>
-        <th>Ação</th>
+        <th>Status</th>
+        <th>Lado</th>
+        <th>Modo</th>
         <th>Temperatura (°C)</th>
         <th>Umidade (%)</th>
         <th>Usuário</th>
@@ -189,22 +151,32 @@
       {% for log in logs %}
       <tr>
         <td>{{ log.timestamp|date:"d/m/Y H:i:s" }}</td>
+
+        <!-- STATUS -->
         <td>
-          {% if log.action == "open" %}
-          <span class="text-success fw-semibold">Aberta</span>
-          {% elif log.action == "close" %}
+          {% if log.status == "Fechada" %}
           <span class="text-danger fw-semibold">Fechada</span>
           {% else %}
-          <span class="text-warning fw-semibold">Parada</span>
+          <span class="text-success fw-semibold">Aberta</span>
           {% endif %}
         </td>
+
+        <!-- LADO -->
+        <td>{{ log.lado|title }}</td>
+
+        <!-- MODO -->
+        <td>
+          {% if log.modo == "modo automático" %} Automático {% else %} Manual
+          {%endif %}
+        </td>
+
         <td>{{ log.temperature|floatformat:1 }}</td>
         <td>{{ log.humidity|floatformat:1 }}</td>
-        <td>{{ log.triggered_by.username|default:"Automático" }}</td>
+        <td>{{ log.usuario }}</td>
       </tr>
       {% empty %}
       <tr>
-        <td colspan="5">Nenhum registro encontrado.</td>
+        <td colspan="7">Nenhum registro encontrado.</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -217,41 +189,42 @@
 
   const labels = leituras.map((l) => {
     const date = new Date(l.timestamp);
-    return (
-      date.toLocaleDateString([], { day: "2-digit", month: "2-digit" }) +
-      " " +
-      date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-    );
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   });
+
   const temperaturas = leituras.map((l) => l.temperature);
   const humidades = leituras.map((l) => l.humidity);
 
-  const corTemperatura = "rgba(229, 57, 53, 1)";
-  const corTemperaturaBg = "rgba(229, 57, 53, 0.2)";
-  const corUmidade = "rgba(30, 136, 229, 1)";
-  const corUmidadeBg = "rgba(30, 136, 229, 0.2)";
+  const ctx = document.getElementById("historicoChart");
 
-  const ctx = document.getElementById("historicoChart").getContext("2d");
-  const historicoChart = new Chart(ctx, {
+  new Chart(ctx, {
     type: "line",
     data: {
-      labels: labels,
+      labels,
       datasets: [
         {
-          label: "Temperatura (°C)",
+          label: "Temperatura média por hora (°C)",
           data: temperaturas,
-          borderColor: corTemperatura,
-          backgroundColor: corTemperaturaBg,
+          borderColor: "rgba(229, 57, 53, 1)",
+          backgroundColor: "rgba(229, 57, 53, 0.15)",
           yAxisID: "y1",
-          tension: 0.3,
+          tension: 0.5,
+          cubicInterpolationMode: "monotone",
+          borderWidth: 3,
+          pointRadius: 4,
+          pointHoverRadius: 6,
         },
         {
-          label: "Umidade (%)",
+          label: "Umidade média por hora (%)",
           data: humidades,
-          borderColor: corUmidade,
-          backgroundColor: corUmidadeBg,
+          borderColor: "rgba(30, 136, 229, 1)",
+          backgroundColor: "rgba(30, 136, 229, 0.15)",
           yAxisID: "y2",
-          tension: 0.3,
+          tension: 0.5,
+          cubicInterpolationMode: "monotone",
+          borderWidth: 3,
+          pointRadius: 4,
+          pointHoverRadius: 6,
         },
       ],
     },
@@ -259,41 +232,21 @@
       responsive: true,
       maintainAspectRatio: false,
       interaction: { mode: "index", intersect: false },
-      stacked: false,
       scales: {
         y1: {
           type: "linear",
-          display: true,
           position: "left",
           title: { display: true, text: "Temperatura (°C)" },
         },
         y2: {
           type: "linear",
-          display: true,
           position: "right",
           title: { display: true, text: "Umidade (%)" },
           grid: { drawOnChartArea: false },
         },
-        x: {
-          ticks: {
-            maxRotation: 45,
-            minRotation: 0,
-            autoSkip: true,
-            maxTicksLimit: 10,
-          },
-        },
       },
     },
   });
-
-  // Filtro por datas
-  document.getElementById("filterBtn").addEventListener("click", () => {
-    const start = document.getElementById("startDate").value;
-    const end = document.getElementById("endDate").value;
-    let url = `/historico/`;
-    if (start) url += `?start=${start}`;
-    if (end) url += start ? `&end=${end}` : `?end=${end}`;
-    window.location.href = url;
-  });
 </script>
+
 {% endblock %}

@@ -1,5 +1,6 @@
 {% extends 'base.html' %} {% block content %}
 <div class="row g-4">
+  <!-- COLUNA PRINCIPAL (esquerda) -->
   <div class="col-lg-8">
     <div class="card shadow-sm mb-4">
       <div class="card-header bg-white border-0 d-flex align-items-center">
@@ -9,6 +10,7 @@
       </div>
 
       <div class="card-body">
+        <!-- linha dos três cards: temperatura, umidade, safety -->
         <div class="row text-center">
           <div class="col-md-4 mb-3">
             <div class="p-3">
@@ -30,212 +32,76 @@
             </div>
           </div>
 
+          <!-- CARTÃO DE SEGURANÇA (safety) -->
           <div class="col-md-4 mb-3">
-            <div class="p-3 status-card rounded-3" id="curtain-status-card">
-              <i id="curtain-icon" class="fs-1 text-aviso"></i>
-              <h4 class="mt-2 fw-semibold" id="curtain-status-text">--</h4>
+            <div class="p-3 status-card rounded-3" id="safety-card">
+              <i id="safety-icon" class="fs-1 text-aviso"></i>
+              <h4 class="mt-2 fw-semibold" id="safety-status-text">--</h4>
               <p
-                id="curtain-movement-text"
+                id="safety-last-contact"
                 class="text-secondary mt-1"
                 style="font-size: 0.9rem"
               >
-                --
+                Último contato: --
               </p>
-
-              <p class="text-muted mb-0">Status da Cortina</p>
+              <p
+                id="safety-esp-ip"
+                class="text-secondary mt-1"
+                style="font-size: 0.9rem"
+              >
+                IP do ESP: --
+              </p>
             </div>
           </div>
         </div>
 
-        <div class="text-center text-muted mt-3">
-          <small>Última atualização: <span id="last-update"></span></small>
+        <!-- * AQUI: cartões das cortinas (ficam abaixo do status, lado a lado) * -->
+        <div class="row mt-4 g-3">
+          <div class="col-md-6">
+            <div class="card p-3" id="left-card">
+              <h5 class="text-center">Cortina — Esquerda</h5>
+              <div class="text-center my-3">
+                <i id="left-icon" class="bi bi-lock-fill fs-1 text-aviso"></i>
+                <h6 id="left-status-text" class="mt-2">--</h6>
+                <p id="left-movement-text" class="text-secondary">--</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card p-3" id="right-card">
+              <h5 class="text-center">Cortina — Direita</h5>
+              <div class="text-center my-3">
+                <i id="right-icon" class="bi bi-lock-fill fs-1 text-aviso"></i>
+                <h6 id="right-status-text" class="mt-2">--</h6>
+                <p id="right-movement-text" class="text-secondary">--</p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="mt-4 text-center">
-          <a href="/historico" class="botao-historico">
-            <i class="bi bi-bar-chart-fill me-2"></i> Ver histórico
+        <!-- rodapé do card grande -->
+        <div class="mt-4 text-center text-muted">
+          <small
+            >Última atualização: <span id="footer-last-update">--</span></small
+          >
+        </div>
+        <div class="text-center mt-3">
+          <a
+            href="{% url 'historico' %}"
+            class="btn btn-success px-4"
+            style="font-weight: 600"
+          >
+            <i class="bi bi-graph-up"></i> Ver Histórico
           </a>
-
-          <style>
-            /* === PALETA DE CORES === */
-            :root {
-              --cor-primaria: #4caf50; /* Verde principal */
-              --cor-primaria-hover: #45a049; /* Verde mais escuro para hover */
-              --cor-aviso: #f7b500; /* Amarelo/Laranja para botões de ação */
-              --cor-temperatura: #e53935; /* Vermelho para ícone de temperatura */
-              --cor-umidade: #1e88e5; /* Azul para ícone de umidade */
-
-              --cor-fundo: #f5f7f5;
-              --cor-fundo-card: #ffffff;
-              --cor-fundo-aberto: #e6f7ee; /* Fundo do card de status "Aberta" */
-              --cor-fundo-fechado: #fff7e6; /* Fundo do card de status "Fechada" */
-              --cor-borda: #e0e0e0;
-            }
-            /* ======================================= */
-            /* === ÍCONES COM CORES DA PALETA === */
-            .text-temperatura {
-              color: var(--cor-temperatura) !important;
-            }
-            .text-umidade {
-              color: var(--cor-umidade) !important;
-            }
-            .text-aviso {
-              color: var(--cor-aviso) !important;
-            }
-
-            /* === CARDS === */
-            .card {
-              border: none !important;
-              border-radius: 20px !important;
-              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-              transition: transform 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .card:hover {
-              transform: translateY(-3px);
-              box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-            }
-
-            .card-header {
-              border-bottom: 2px solid var(--cor-primaria) !important;
-              border-radius: 20px 20px 0 0 !important;
-              background: var(--cor-fundo-card) !important;
-              padding: 1rem 1.5rem;
-            }
-
-            .card-header h4,
-            .card-header h5 {
-              color: var(--cor-primaria);
-              font-weight: 600;
-              margin: 0;
-            }
-
-            /* === STATUS CARDS (temperatura, umidade, cortina) === */
-            .status-card {
-              background: #f8fdf8;
-              border-radius: 15px;
-              padding: 1rem;
-              transition: background 0.3s;
-            }
-
-            .status-card.open {
-              background: var(--cor-fundo-aberto);
-            }
-
-            .status-card.closed {
-              background: var(--cor-fundo-fechado);
-            }
-
-            /* === BOTÕES === */
-            .btn-success,
-            .btn-primary,
-            .btn-warning {
-              border: none;
-              border-radius: 10px !important;
-              font-weight: 600;
-            }
-            .btn-primary {
-              background-color: var(--cor-primaria) !important;
-            }
-
-            .btn-primary:hover {
-              background-color: var(--cor-primaria-hover) !important;
-            }
-
-            .btn-warning {
-              background-color: var(--cor-aviso) !important;
-            }
-
-            /* ===FORMULÁRIOS === */
-            .form-control {
-              border-radius: 12px !important;
-              border: 1px solid var(--cor-borda) !important;
-              padding: 0.8rem 1rem;
-              transition: border-color 0.2s, box-shadow 0.2s;
-            }
-
-            .form-control:focus {
-              border-color: var(--cor-primaria) !important;
-              box-shadow: 0 0 0 0.15rem rgba(75, 145, 42, 0.25) !important;
-            }
-
-            /* === SWITCH === */
-            .form-check-input:checked {
-              background-color: var(--cor-primaria) !important;
-              border-color: var(--cor-primaria) !important;
-            }
-
-            /* === HISTÓRICO === */
-            .botao-historico {
-              display: inline-flex;
-              justify-content: center;
-              align-items: center;
-              gap: 0.6rem;
-              background-color: var(--cor-primaria);
-              color: white !important;
-              font-weight: 600;
-              padding: 0.6rem 1.2rem;
-              font-size: 0.95rem;
-              border-radius: 12px;
-              text-decoration: none;
-              box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-              transition: all 0.2s ease;
-              margin: 0 auto;
-              display: block;
-              width: fit-content;
-            }
-
-            .botao-historico:hover {
-              background-color: var(--cor-primaria-hover);
-              transform: translateY(-2px);
-              box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
-            }
-
-            /* === TÍTULOS GERAIS === */
-            h4,
-            h5 {
-              font-weight: 600;
-            }
-
-            /* === TEXTO DE STATUS === */
-            .text-muted {
-              font-size: 0.9rem;
-            }
-
-            /* === ÍCONES GRANDES === */
-            .fs-1 {
-              font-size: 2.5rem !important;
-            }
-            /* Corrige bordas dos botões dentro do grupo */
-            .btn-group .btn {
-              border-radius: 12px !important; /* deixa todos arredondados */
-              margin: 0 1px; /* dá um pequeno espaçamento entre eles */
-            }
-
-            /* Remove a fusão de bordas padrão do Bootstrap */
-            .btn-group {
-              gap: 0 !important;
-            }
-            .status-card.paused {
-              background: #fffbe6; /* amarelo clarinho */
-              animation: blink 1.5s infinite alternate;
-            }
-
-            @keyframes blink {
-              from {
-                box-shadow: 0 0 0px rgba(255, 193, 7, 0.4);
-              }
-              to {
-                box-shadow: 0 0 12px rgba(255, 193, 7, 0.8);
-              }
-            }
-          </style>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- COLUNA DIREITA (parâmetros + controles manuais) -->
   <div class="col-lg-4">
+    <!-- Parâmetros -->
     <div class="card shadow-sm mb-4">
       <div class="card-header bg-white">
         <h5 class="mb-0">Definir Parâmetros</h5>
@@ -272,6 +138,8 @@
         </form>
       </div>
     </div>
+
+    <!-- Toggle automático -->
     <div class="form-check form-switch text-start mb-3">
       <input
         class="form-check-input"
@@ -285,37 +153,74 @@
         %}
         onchange="toggleAutomaticMode(this.checked)"
       />
-      <label class="form-check-label" for="autoModeSwitch">
-        Modo Automático
-      </label>
+      <label class="form-check-label" for="autoModeSwitch"
+        >Modo Automático</label
+      >
     </div>
 
-    <div class="card shadow-sm">
+    <!-- Controle Manual — Esquerda -->
+    <div class="card shadow-sm mb-4">
       <div class="card-header bg-white">
-        <h5 class="mb-0">Controle Manual</h5>
+        <h5 class="mb-0">Controle Manual — Cortina Esquerda</h5>
       </div>
       <div class="card-body text-center">
         <div class="btn-group w-100">
           <button
-            id="btn-open"
+            id="left-open"
+            type="button"
             class="btn btn-success btn-lg"
-            onclick="manualControl('open')"
+            onclick="manualLeft('open')"
           >
             <i class="bi bi-arrow-up-circle"></i> Abrir
           </button>
-
           <button
-            id="btn-stop"
+            id="left-stop"
+            type="button"
             class="btn btn-warning btn-lg"
-            onclick="manualControl('stop')"
+            onclick="manualLeft('stop')"
           >
             <i class="bi bi-pause-circle"></i> Parar
           </button>
-
           <button
-            id="btn-close"
+            id="left-close"
+            type="button"
             class="btn btn-danger btn-lg"
-            onclick="manualControl('close')"
+            onclick="manualLeft('close')"
+          >
+            <i class="bi bi-arrow-down-circle"></i> Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controle Manual — Direita -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">Controle Manual — Cortina Direita</h5>
+      </div>
+      <div class="card-body text-center">
+        <div class="btn-group w-100">
+          <button
+            id="right-open"
+            type="button"
+            class="btn btn-success btn-lg"
+            onclick="manualRight('open')"
+          >
+            <i class="bi bi-arrow-up-circle"></i> Abrir
+          </button>
+          <button
+            id="right-stop"
+            type="button"
+            class="btn btn-warning btn-lg"
+            onclick="manualRight('stop')"
+          >
+            <i class="bi bi-pause-circle"></i> Parar
+          </button>
+          <button
+            id="right-close"
+            type="button"
+            class="btn btn-danger btn-lg"
+            onclick="manualRight('close')"
           >
             <i class="bi bi-arrow-down-circle"></i> Fechar
           </button>
@@ -331,92 +236,215 @@
 ></div>
 {% endblock %} {% block scripts %}
 <script>
-  const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+  const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")
+    ? document.querySelector("[name=csrfmiddlewaretoken]").value
+    : "";
 
+  // desabilita/ativa todos botões manuais
+  function disableManualButtons(disabled) {
+    const ids = [
+      "left-open",
+      "left-stop",
+      "left-close",
+      "right-open",
+      "right-stop",
+      "right-close",
+    ];
+    ids.forEach((id) => {
+      const b = document.getElementById(id);
+      if (b) b.disabled = disabled;
+    });
+  }
+
+  // atualiza interface (dependendo do modo automático e do estado do ESP)
+  function updateInterfaceStateFromData(data) {
+    const isAuto = Boolean(data.automatic_mode);
+    const espOnline = Boolean(data.esp_online);
+    const autoSwitch = document.getElementById("auto-switch");
+
+    // mantém o switch sincronizado com o backend
+    if (autoSwitch) {
+      autoSwitch.checked = isAuto;
+    }
+
+    // se ESP offline -> tudo desativado
+    if (!espOnline) {
+      disableManualButtons(true);
+      document.getElementById("min-temp").disabled = true;
+      document.getElementById("max-temp").disabled = true;
+      document.querySelector("#params-form button").disabled = true;
+      if (autoSwitch) {
+        autoSwitch.disabled = true;
+      }
+      return;
+    }
+
+    // ESP online -> garante que o switch esteja habilitado
+    if (autoSwitch) {
+      autoSwitch.disabled = false;
+    }
+
+    // se automático -> desativa manuais e habilita parâmetros
+    if (isAuto) {
+      disableManualButtons(true);
+      document.getElementById("min-temp").disabled = false;
+      document.getElementById("max-temp").disabled = false;
+      document.querySelector("#params-form button").disabled = false;
+    } else {
+      // manual -> habilita controles manuais e desabilita parâmetros
+      disableManualButtons(false);
+      document.getElementById("min-temp").disabled = true;
+      document.getElementById("max-temp").disabled = true;
+      document.querySelector("#params-form button").disabled = true;
+    }
+  }
+
+  // função principal que busca status e atualiza UI
   function updateStatus() {
-    fetch("{% url 'api_status' %}?device=browser")
+    fetch("{% url 'get_status_api' %}?device=browser")
       .then((response) => response.json())
       .then((data) => {
+        // sensor display
         if (data.latest_reading) {
           document.getElementById("temp-display").textContent =
             data.latest_reading.temperature.toFixed(1);
-
           document.getElementById("humidity-display").textContent =
             data.latest_reading.humidity.toFixed(1);
 
           const dt = new Date(data.latest_reading.timestamp);
-          document.getElementById("last-update").textContent =
-            dt.toLocaleString("pt-BR");
+          const footerLastUpdate =
+            document.getElementById("footer-last-update");
+          if (footerLastUpdate) {
+            footerLastUpdate.textContent = dt.toLocaleString("pt-BR");
+          }
         } else {
           document.getElementById("temp-display").textContent = "--";
           document.getElementById("humidity-display").textContent = "--";
-          document.getElementById("last-update").textContent = "--";
+          const footerLastUpdate =
+            document.getElementById("footer-last-update");
+          if (footerLastUpdate) {
+            footerLastUpdate.textContent = "--";
+          }
         }
-        // --- ESP OFFLINE ---
+        // === Atualiza inputs de parâmetros ===
+        const minInput = document.getElementById("min-temp");
+        const maxInput = document.getElementById("max-temp");
+
+        if (minInput && data.min_temperature !== undefined) {
+          minInput.value = data.min_temperature;
+        }
+
+        if (maxInput && data.max_temperature !== undefined) {
+          maxInput.value = data.max_temperature;
+        }
+
+        // atualização do cartão de segurança
+        if (data.esp_ip)
+          document.getElementById("safety-esp-ip").textContent =
+            "IP do ESP: " + data.esp_ip;
+        document.getElementById("safety-last-contact").textContent =
+          "Último contato: " +
+          (data.last_contact_seconds !== null &&
+          data.last_contact_seconds !== undefined
+            ? data.last_contact_seconds + "s atrás"
+            : "--");
+
+        const safetyCard = document.getElementById("safety-card");
+        const safetyIcon = document.getElementById("safety-icon");
+        const safetyText = document.getElementById("safety-status-text");
+        safetyCard.classList.remove("open", "closed", "paused");
+
         if (!data.esp_online) {
-          document.getElementById("curtain-status-text").textContent =
-            "ESP Offline";
-          document.getElementById("curtain-icon").className =
+          safetyText.textContent = "ESP Offline";
+          safetyIcon.className = "bi bi-wifi-off fs-1 text-danger";
+          safetyCard.classList.add("closed");
+        } else if (data.fail_safe) {
+          safetyText.textContent = "Fail-safe Ativo";
+          safetyIcon.className = "bi bi-shield-exclamation fs-1 text-warning";
+          safetyCard.classList.add("paused");
+        } else {
+          safetyText.textContent = "Conectado";
+          safetyIcon.className = "bi bi-shield-check fs-1 text-success";
+          safetyCard.classList.add("open");
+        }
+
+        // Se ESP offline, exibe offline nas duas cortinas e encerra (botões já desativados)
+        if (!data.esp_online) {
+          // left
+          document.getElementById("left-status-text").textContent = "Offline";
+          document.getElementById("left-icon").className =
             "bi bi-wifi-off fs-1 text-danger";
+          document.getElementById("left-movement-text").textContent = "";
 
-          // Desativa botões
-          document.getElementById("btn-open").disabled = true;
-          document.getElementById("btn-close").disabled = true;
-          document.getElementById("btn-stop").disabled = true;
+          // right
+          document.getElementById("right-status-text").textContent = "Offline";
+          document.getElementById("right-icon").className =
+            "bi bi-wifi-off fs-1 text-danger";
+          document.getElementById("right-movement-text").textContent = "";
 
-          showToast("ESP32 está offline — comandos desativados!", "danger");
+          disableManualButtons(true);
           return;
         }
 
-        // --- ESP Online ---
-        const statusCard = document.getElementById("curtain-status-card");
-        const statusText = document.getElementById("curtain-status-text");
-        const statusIcon = document.getElementById("curtain-icon");
-
-        // POSIÇÃO REAL (aberto / fechado)
-        const isOpen = data.curtain_is_open;
-
-        // MOVIMENTO (abrindo / fechando / parado)
-        const movement = data.curtain_status;
-        const movementText = document.getElementById("curtain-movement-text");
-
-        if (movement === "open") {
-          movementText.textContent = "Movimento: Abrindo 🔼";
-        } else if (movement === "close") {
-          movementText.textContent = "Movimento: Fechando 🔽";
-        } else if (movement === "stop") {
-          movementText.textContent = "Movimento: Parada ⏸️";
+        // --- LEFT card ---
+        const leftOpen = Boolean(data.left_is_open);
+        const leftAction = data.left || "stop";
+        const leftCard = document.getElementById("left-card");
+        const leftIcon = document.getElementById("left-icon");
+        const leftStatusText = document.getElementById("left-status-text");
+        const leftMovementText = document.getElementById("left-movement-text");
+        leftCard.classList.remove("open", "closed", "paused");
+        if (leftOpen) {
+          leftStatusText.textContent = "Aberta";
+          leftIcon.className = "bi bi-unlock-fill fs-1 text-umidade";
+          leftCard.classList.add("open");
         } else {
-          movementText.textContent = "Movimento: --";
+          leftStatusText.textContent = "Fechada";
+          leftIcon.className = "bi bi-lock-fill fs-1 text-aviso";
+          leftCard.classList.add("closed");
         }
+        if (leftAction === "open")
+          leftMovementText.textContent = "Movimento: Abrindo 🔼";
+        else if (leftAction === "close")
+          leftMovementText.textContent = "Movimento: Fechando 🔽";
+        else leftMovementText.textContent = "Movimento: Parada ⏸️";
+        if (leftAction !== "stop") leftCard.classList.add("paused");
 
-        // Reset classes
-        statusCard.classList.remove("open", "closed", "paused");
-
-        // --- EXIBE A POSIÇÃO REAL ---
-        if (isOpen) {
-          statusText.textContent = "Aberta";
-          statusIcon.className = "bi bi-unlock-fill fs-1 text-umidade";
-          statusCard.classList.add("open");
+        // --- RIGHT card ---
+        const rightOpen = Boolean(data.right_is_open);
+        const rightAction = data.right || "stop";
+        const rightCard = document.getElementById("right-card");
+        const rightIcon = document.getElementById("right-icon");
+        const rightStatusText = document.getElementById("right-status-text");
+        const rightMovementText = document.getElementById(
+          "right-movement-text"
+        );
+        rightCard.classList.remove("open", "closed", "paused");
+        if (rightOpen) {
+          rightStatusText.textContent = "Aberta";
+          rightIcon.className = "bi bi-unlock-fill fs-1 text-umidade";
+          rightCard.classList.add("open");
         } else {
-          statusText.textContent = "Fechada";
-          statusIcon.className = "bi bi-lock-fill fs-1 text-aviso";
-          statusCard.classList.add("closed");
+          rightStatusText.textContent = "Fechada";
+          rightIcon.className = "bi bi-lock-fill fs-1 text-aviso";
+          rightCard.classList.add("closed");
         }
+        if (rightAction === "open")
+          rightMovementText.textContent = "Movimento: Abrindo 🔼";
+        else if (rightAction === "close")
+          rightMovementText.textContent = "Movimento: Fechando 🔽";
+        else rightMovementText.textContent = "Movimento: Parada ⏸️";
+        if (rightAction !== "stop") rightCard.classList.add("paused");
 
-        // --- ESTÉTICA DE MOVIMENTO--
-        if (movement !== "stop") {
-          statusCard.classList.add("paused");
-        }
-
-        // reabilita botões se não estiver no automático
-        let isAuto = data.automatic_mode;
-        document.getElementById("btn-open").disabled = isAuto;
-        document.getElementById("btn-close").disabled = isAuto;
-        document.getElementById("btn-stop").disabled = isAuto;
+        // atualiza enable/disable dos botões conforme modo automático
+        updateInterfaceStateFromData(data);
+      })
+      .catch((err) => {
+        console.error("Erro ao buscar status:", err);
       });
   }
 
+  // ===== envio do form de parâmetros =====
   document
     .getElementById("params-form")
     .addEventListener("submit", function (e) {
@@ -424,7 +452,7 @@
       const minTemp = parseFloat(document.getElementById("min-temp").value);
       const maxTemp = parseFloat(document.getElementById("max-temp").value);
 
-      fetch("{% url 'api_set_parameters' %}", {
+      fetch("{% url 'set_parameters_api' %}", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -435,17 +463,17 @@
           max_temperature: maxTemp,
         }),
       })
-        .then((response) => response.json())
+        .then((r) => r.json())
         .then((data) => {
           showToast(
             data.success ? "Parâmetros salvos!" : "Erro ao salvar",
             data.success ? "success" : "danger"
           );
-          updateStatus(); // Atualiza o dashboard imediatamente
-          updateManualButtonsState();
+          updateStatus();
         });
     });
 
+  // ===== toggle automatic mode =====
   function toggleAutomaticMode(isAutomatic) {
     fetch("{% url 'toggle_automatic_mode' %}", {
       method: "POST",
@@ -455,7 +483,7 @@
       },
       body: JSON.stringify({ automatic_mode: isAutomatic }),
     })
-      .then((response) => response.json())
+      .then((r) => r.json())
       .then((data) => {
         showToast(
           data.automatic_mode
@@ -463,46 +491,14 @@
             : "Modo manual ativado",
           "success"
         );
-        updateInterfaceState();
+        updateStatus();
       })
-      .catch(() => showToast("Erro ao alternar o modo", "danger"));
+      .catch(() => showToast("Erro ao alternar modo", "danger"));
   }
 
-  // Atualiza os estados dos botões e campos de parâmetros
-  function updateInterfaceState() {
-    const isAuto = document.getElementById("auto-switch").checked;
-
-    // Botões de controle manual ficam desativados no modo automático
-    document.getElementById("btn-open").disabled = isAuto;
-    document.getElementById("btn-close").disabled = isAuto;
-    document.getElementById("btn-stop").disabled = isAuto;
-
-    // Campos de parâmetros ficam desativados no modo manual
-    document.getElementById("min-temp").disabled = !isAuto;
-    document.getElementById("max-temp").disabled = !isAuto;
-    document.querySelector("#params-form button").disabled = !isAuto;
-  }
-
-  // Atualiza o estado inicial ao carregar a página
-  document.addEventListener("DOMContentLoaded", () => {
-    fetch("{% url 'api_status' %}?device=browser")
-      .then((res) => res.json())
-      .then((data) => {
-        const autoSwitch = document.getElementById("auto-switch");
-        autoSwitch.checked = data.automatic_mode; // garante que checkbox reflete o banco
-        updateInterfaceState(); // atualiza botões e campos
-      })
-      .catch((err) => console.error("Erro ao buscar estado automático:", err));
-  });
-
-  function updateManualButtonsState() {
-    const isAuto = document.getElementById("auto-switch").checked;
-    document.getElementById("btn-open").disabled = isAuto;
-    document.getElementById("btn-close").disabled = isAuto;
-  }
-
-  function manualControl(action) {
-    fetch("{% url 'api_manual_control' %}", {
+  // ===== controles manuais left/right =====
+  function manualLeft(action) {
+    fetch("{% url 'manual_left_api' %}", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -510,13 +506,36 @@
       },
       body: JSON.stringify({ action: action }),
     })
-      .then((response) => response.json())
+      .then((r) => r.json())
       .then((data) => {
         showToast(
-          data.success ? "Ação realizada!" : "Erro na ação",
+          data.success
+            ? "Cortina Esquerda: ação realizada!"
+            : data.message || "Erro",
           data.success ? "success" : "danger"
         );
-        updateStatus(); // Atualiza o dashboard imediatamente
+        updateStatus();
+      });
+  }
+
+  function manualRight(action) {
+    fetch("{% url 'manual_right_api' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken,
+      },
+      body: JSON.stringify({ action: action }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        showToast(
+          data.success
+            ? "Cortina Direita: ação realizada!"
+            : data.message || "Erro",
+          data.success ? "success" : "danger"
+        );
+        updateStatus();
       });
   }
 
@@ -527,19 +546,19 @@
     toastEl.setAttribute("role", "alert");
     toastEl.setAttribute("aria-live", "assertive");
     toastEl.setAttribute("aria-atomic", "true");
-    toastEl.innerHTML = `
-      <div class="d-flex">
-        <div class="toast-body">${message}</div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-      </div>
-    `;
+    toastEl.innerHTML = `<div class="d-flex">
+      <div class="toast-body">${message}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>`;
     toastContainer.appendChild(toastEl);
     const toast = new bootstrap.Toast(toastEl);
     toast.show();
   }
 
-  // Atualização automática a cada 5 segundos
-  updateStatus();
-  setInterval(updateStatus, 5000);
+  // Inicializa
+  document.addEventListener("DOMContentLoaded", () => {
+    updateStatus();
+    setInterval(updateStatus, 5000);
+  });
 </script>
 {% endblock %}
