@@ -496,7 +496,6 @@
       .catch(() => showToast("Erro ao alternar modo", "danger"));
   }
 
-  // ===== controles manuais left/right =====
   function manualLeft(action) {
     fetch("{% url 'manual_left_api' %}", {
       method: "POST",
@@ -508,13 +507,26 @@
     })
       .then((r) => r.json())
       .then((data) => {
-        showToast(
-          data.success
-            ? "Cortina Esquerda: ação realizada!"
-            : data.message || "Erro",
-          data.success ? "success" : "danger"
-        );
+        // usa sempre a mensagem vinda do backend, se existir
+        const msg =
+          data.message ||
+          (data.success
+            ? "Comando enviado para a cortina esquerda."
+            : "Erro ao enviar comando.");
+
+        // se veio a mensagem de "Ação não realizada", mostra como aviso
+        const type = !data.success
+          ? "danger"
+          : msg.startsWith("Ação não realizada")
+          ? "warning"
+          : "success";
+
+        showToast(msg, type);
         updateStatus();
+      })
+      .catch((err) => {
+        console.error("Erro ao enviar comando para a cortina esquerda:", err);
+        showToast("Erro de comunicação com o servidor.", "danger");
       });
   }
 
@@ -529,13 +541,24 @@
     })
       .then((r) => r.json())
       .then((data) => {
-        showToast(
-          data.success
-            ? "Cortina Direita: ação realizada!"
-            : data.message || "Erro",
-          data.success ? "success" : "danger"
-        );
+        const msg =
+          data.message ||
+          (data.success
+            ? "Comando enviado para a cortina direita."
+            : "Erro ao enviar comando.");
+
+        const type = !data.success
+          ? "danger"
+          : msg.startsWith("Ação não realizada")
+          ? "warning"
+          : "success";
+
+        showToast(msg, type);
         updateStatus();
+      })
+      .catch((err) => {
+        console.error("Erro ao enviar comando para a cortina direita:", err);
+        showToast("Erro de comunicação com o servidor.", "danger");
       });
   }
 

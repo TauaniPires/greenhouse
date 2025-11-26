@@ -168,7 +168,7 @@ def get_status_api(request):
     # === LER ÚLTIMA LEITURA DO SENSOR ===
     latest = SensorReading.objects.order_by('-timestamp').first()
 
-# === LÓGICA DO MODO AUTOMÁTICO ===
+    # === LÓGICA DO MODO AUTOMÁTICO ===
     if latest and control.automatic_mode and esp_is_online:
         temperatura = latest.temperature
         min_t = control.min_temperature
@@ -189,11 +189,38 @@ def get_status_api(request):
             else:
                 desired_action = 'stop'
 
+        # guarda o status anterior para saber se o comando mudou
+        previous_status = control.curtain_status
+
         control.auto_left_action = desired_action
         control.auto_right_action = desired_action
         control.curtain_status = desired_action
         control.save(update_fields=["auto_left_action", "auto_right_action", "curtain_status"])
 
+        # REGISTRA LOG AUTOMÁTICO SOMENTE QUANDO O COMANDO MUDA
+        if desired_action in ['open', 'close'] and desired_action != previous_status:
+            temp = latest.temperature
+            hum = latest.humidity
+
+            # evita log idêntico em sequência
+            ultimo_log = CurtainLog.objects.order_by("-timestamp").first()
+            criar_log = True
+            if (
+                ultimo_log and
+                ultimo_log.action == desired_action and
+                ultimo_log.side in ['both'] and
+                ultimo_log.triggered_by is None
+            ):
+                criar_log = False
+
+            if criar_log:
+                CurtainLog.objects.create(
+                    side='both',              # ou 'left'/'right' se você quiser separar
+                    action=desired_action,    # 'open' ou 'close'
+                    temperature=temp,
+                    humidity=hum,
+                    triggered_by=None,        # marca como "modo automático" no histórico
+                )
 
     # qual comando enviar para cada lado?
     if control.automatic_mode:
@@ -334,31 +361,84 @@ def manual_left_api(request):
     control = _ensure_control()
 
     if not esp_online(control):
-        return JsonResponse({"success": False, "message": "O ESP32 está offline — comandos desativados.", "esp_online": False})
+        return JsonResponse(
+            {
+                "success": False,
+                "message": "ESP32 está offline — comandos desativados.",
+                "esp_online": False,
+            }
+        )
 
     try:
         payload = json.loads(request.body)
-        action = payload.get('action')
-        if action not in ['open', 'close', 'stop']:
-            return HttpResponseBadRequest('Ação inválida')
+        action = payload.get("action")
+        if action not in ["open", "close", "stop"]:
+            return HttpResponseBadRequest("Ação inválida")
+
+        original_action = action
+        mensagem = ""
+
+        # guarda o estado manual anterior para saber se já estava parado
+        previous_manual = control.manual_left_action
+
+        # Evita reenviar comando redundante:
+        # - se já está aberta e pediram "open" -> não movimenta (vira stop)
+        # - se já está fechada e pediram "close" -> não movimenta (vira stop)
+        if original_action == "open" and control.left_is_open:
+            action = "stop"
+            mensagem = "Ação não realizada: a cortina esquerda já está aberta."
+        elif original_action == "close" and not control.left_is_open:
+            action = "stop"
+            mensagem = "Ação não realizada: a cortina esquerda já está fechada."
+        # - se já está parada e pediram "stop" de novo
+        elif original_action == "stop" and previous_manual == "stop":
+            # continua como stop, mas com mensagem de redundância
+            mensagem = "Ação não realizada: a cortina esquerda já está parada."
 
         control.manual_left_action = action
         control.automatic_mode = False
         control.save()
 
-        latest = SensorReading.objects.order_by('-timestamp').first()
-        CurtainLog.objects.create(
-            side='left',
-            action=action,
-            temperature=latest.temperature if latest else 0,
-            humidity=latest.humidity if latest else 0,
-            triggered_by=request.user if request.user.is_authenticated else None
+        # Controle de log
+        registrar_log = True
+
+        # Se foi redundante (aberta/fechada) e virou stop, não loga
+        if original_action in ["open", "close"] and action == "stop" and mensagem:
+            registrar_log = False
+
+        # Se já estava parada e mandou stop de novo, também não loga
+        if original_action == "stop" and previous_manual == "stop":
+            registrar_log = False
+
+        if registrar_log:
+            latest = SensorReading.objects.order_by("-timestamp").first()
+            CurtainLog.objects.create(
+                side="left",
+                action=original_action,
+                temperature=latest.temperature if latest else 0,
+                humidity=latest.humidity if latest else 0,
+                triggered_by=request.user if request.user.is_authenticated else None,
+            )
+
+            # Se não era caso redundante, monta mensagem padrão
+            if not mensagem:
+                if original_action == "open":
+                    mensagem = "Comando enviado para abrir a cortina esquerda."
+                elif original_action == "close":
+                    mensagem = "Comando enviado para fechar a cortina esquerda."
+                else:
+                    mensagem = "Comando de parada enviado para a cortina esquerda."
+
+        return JsonResponse(
+            {
+                "success": True,
+                "left": action,
+                "message": mensagem,
+            }
         )
 
-        return JsonResponse({'success': True, 'left': action})
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=400)
-
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 @login_required
 @require_POST
@@ -369,30 +449,75 @@ def manual_right_api(request):
     control = _ensure_control()
 
     if not esp_online(control):
-        return JsonResponse({"success": False, "message": "O ESP32 está offline — comandos desativados.", "esp_online": False})
+        return JsonResponse(
+            {
+                "success": False,
+                "message": "ESP32 está offline — comandos desativados.",
+                "esp_online": False,
+            }
+        )
 
     try:
         payload = json.loads(request.body)
-        action = payload.get('action')
-        if action not in ['open', 'close', 'stop']:
-            return HttpResponseBadRequest('Ação inválida')
+        action = payload.get("action")
+        if action not in ["open", "close", "stop"]:
+            return HttpResponseBadRequest("Ação inválida")
+
+        original_action = action
+        mensagem = ""
+
+        previous_manual = control.manual_right_action
+
+        # Evita reenviar comando redundante:
+        if original_action == "open" and control.right_is_open:
+            action = "stop"
+            mensagem = "Ação não realizada: a cortina direita já está aberta."
+        elif original_action == "close" and not control.right_is_open:
+            action = "stop"
+            mensagem = "Ação não realizada: a cortina direita já está fechada."
+        elif original_action == "stop" and previous_manual == "stop":
+            mensagem = "Ação não realizada: a cortina direita já está parada."
 
         control.manual_right_action = action
         control.automatic_mode = False
         control.save()
 
-        latest = SensorReading.objects.order_by('-timestamp').first()
-        CurtainLog.objects.create(
-            side='right',
-            action=action,
-            temperature=latest.temperature if latest else 0,
-            humidity=latest.humidity if latest else 0,
-            triggered_by=request.user if request.user.is_authenticated else None
+        registrar_log = True
+
+        if original_action in ["open", "close"] and action == "stop" and mensagem:
+            registrar_log = False
+
+        if original_action == "stop" and previous_manual == "stop":
+            registrar_log = False
+
+        if registrar_log:
+            latest = SensorReading.objects.order_by("-timestamp").first()
+            CurtainLog.objects.create(
+                side="right",
+                action=original_action,
+                temperature=latest.temperature if latest else 0,
+                humidity=latest.humidity if latest else 0,
+                triggered_by=request.user if request.user.is_authenticated else None,
+            )
+
+            if not mensagem:
+                if original_action == "open":
+                    mensagem = "Comando enviado para abrir a cortina direita."
+                elif original_action == "close":
+                    mensagem = "Comando enviado para fechar a cortina direita."
+                else:
+                    mensagem = "Comando de parada enviado para a cortina direita."
+
+        return JsonResponse(
+            {
+                "success": True,
+                "right": action,
+                "message": mensagem,
+            }
         )
 
-        return JsonResponse({'success': True, 'right': action})
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 
 # ---------- Controle vindo do ESP32 (sem login e sem CSRF) ----------
@@ -464,8 +589,12 @@ def manual_control_esp_api(request):
         # Evita log duplicado
         ultimo_log = CurtainLog.objects.order_by("-timestamp").first()
         criar_log = True
-        if ultimo_log and ultimo_log.action == final_action and (ultimo_log.side in [side, 'both']):
-            criar_log = False
+        is_manual = not control.automatic_mode
+        triggered_by_user = None
+
+        if ultimo_log:
+            if ultimo_log.action == final_action and ultimo_log.side == side:
+                criar_log = False
 
         if criar_log:
             CurtainLog.objects.create(
@@ -473,7 +602,7 @@ def manual_control_esp_api(request):
                 action=final_action,
                 temperature=temp,
                 humidity=hum,
-                triggered_by=None
+                triggered_by=triggered_by_user  # None = Automático
             )
 
         return JsonResponse({
