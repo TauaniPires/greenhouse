@@ -375,59 +375,28 @@ def manual_left_api(request):
         if action not in ["open", "close", "stop"]:
             return HttpResponseBadRequest("Ação inválida")
 
-        original_action = action
-        mensagem = ""
-
-        # guarda o estado manual anterior para saber se já estava parado
-        previous_manual = control.manual_left_action
-
-        # Evita reenviar comando redundante:
-        # - se já está aberta e pediram "open" -> não movimenta (vira stop)
-        # - se já está fechada e pediram "close" -> não movimenta (vira stop)
-        if original_action == "open" and control.left_is_open:
-            action = "stop"
-            mensagem = "Ação não realizada: a cortina esquerda já está aberta."
-        elif original_action == "close" and not control.left_is_open:
-            action = "stop"
-            mensagem = "Ação não realizada: a cortina esquerda já está fechada."
-        # - se já está parada e pediram "stop" de novo
-        elif original_action == "stop" and previous_manual == "stop":
-            # continua como stop, mas com mensagem de redundância
-            mensagem = "Ação não realizada: a cortina esquerda já está parada."
-
+        # SEM mais checagem de left_is_open (sempre envia o comando)
         control.manual_left_action = action
         control.automatic_mode = False
         control.save()
 
-        # Controle de log
-        registrar_log = True
+        # Log simples sempre que um comando manual é enviado
+        latest = SensorReading.objects.order_by("-timestamp").first()
+        CurtainLog.objects.create(
+            side="left",
+            action=action,
+            temperature=latest.temperature if latest else 0,
+            humidity=latest.humidity if latest else 0,
+            triggered_by=request.user if request.user.is_authenticated else None,
+        )
 
-        # Se foi redundante (aberta/fechada) e virou stop, não loga
-        if original_action in ["open", "close"] and action == "stop" and mensagem:
-            registrar_log = False
-
-        # Se já estava parada e mandou stop de novo, também não loga
-        if original_action == "stop" and previous_manual == "stop":
-            registrar_log = False
-
-        if registrar_log:
-            latest = SensorReading.objects.order_by("-timestamp").first()
-            CurtainLog.objects.create(
-                side="left",
-                action=original_action,
-                temperature=latest.temperature if latest else 0,
-                humidity=latest.humidity if latest else 0,
-                triggered_by=request.user if request.user.is_authenticated else None,
-            )
-
-            # Se não era caso redundante, monta mensagem padrão
-            if not mensagem:
-                if original_action == "open":
-                    mensagem = "Comando enviado para abrir a cortina esquerda."
-                elif original_action == "close":
-                    mensagem = "Comando enviado para fechar a cortina esquerda."
-                else:
-                    mensagem = "Comando de parada enviado para a cortina esquerda."
+        # Mensagem padrão
+        if action == "open":
+            mensagem = "Comando enviado para abrir a cortina esquerda."
+        elif action == "close":
+            mensagem = "Comando enviado para fechar a cortina esquerda."
+        else:
+            mensagem = "Comando de parada enviado para a cortina esquerda."
 
         return JsonResponse(
             {
@@ -439,6 +408,7 @@ def manual_left_api(request):
 
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=400)
+
 
 @login_required
 @require_POST
@@ -463,50 +433,28 @@ def manual_right_api(request):
         if action not in ["open", "close", "stop"]:
             return HttpResponseBadRequest("Ação inválida")
 
-        original_action = action
-        mensagem = ""
-
-        previous_manual = control.manual_right_action
-
-        # Evita reenviar comando redundante:
-        if original_action == "open" and control.right_is_open:
-            action = "stop"
-            mensagem = "Ação não realizada: a cortina direita já está aberta."
-        elif original_action == "close" and not control.right_is_open:
-            action = "stop"
-            mensagem = "Ação não realizada: a cortina direita já está fechada."
-        elif original_action == "stop" and previous_manual == "stop":
-            mensagem = "Ação não realizada: a cortina direita já está parada."
-
+        # SEM mais checagem de right_is_open (sempre envia o comando)
         control.manual_right_action = action
         control.automatic_mode = False
         control.save()
 
-        registrar_log = True
+        # Log simples sempre que um comando manual é enviado
+        latest = SensorReading.objects.order_by("-timestamp").first()
+        CurtainLog.objects.create(
+            side="right",
+            action=action,
+            temperature=latest.temperature if latest else 0,
+            humidity=latest.humidity if latest else 0,
+            triggered_by=request.user if request.user.is_authenticated else None,
+        )
 
-        if original_action in ["open", "close"] and action == "stop" and mensagem:
-            registrar_log = False
-
-        if original_action == "stop" and previous_manual == "stop":
-            registrar_log = False
-
-        if registrar_log:
-            latest = SensorReading.objects.order_by("-timestamp").first()
-            CurtainLog.objects.create(
-                side="right",
-                action=original_action,
-                temperature=latest.temperature if latest else 0,
-                humidity=latest.humidity if latest else 0,
-                triggered_by=request.user if request.user.is_authenticated else None,
-            )
-
-            if not mensagem:
-                if original_action == "open":
-                    mensagem = "Comando enviado para abrir a cortina direita."
-                elif original_action == "close":
-                    mensagem = "Comando enviado para fechar a cortina direita."
-                else:
-                    mensagem = "Comando de parada enviado para a cortina direita."
+        # Mensagem padrão
+        if action == "open":
+            mensagem = "Comando enviado para abrir a cortina direita."
+        elif action == "close":
+            mensagem = "Comando enviado para fechar a cortina direita."
+        else:
+            mensagem = "Comando de parada enviado para a cortina direita."
 
         return JsonResponse(
             {
