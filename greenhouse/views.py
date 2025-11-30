@@ -174,20 +174,24 @@ def get_status_api(request):
         min_t = control.min_temperature
         max_t = control.max_temperature
 
-        should_open = (min_t <= temperatura <= max_t)
 
-        if should_open:
+        if temperatura < min_t:
+            # fecha só se tiver algo aberto
+            if control.left_is_open or control.right_is_open:
+                desired_action = 'close'
+            else:
+                desired_action = 'stop'
+
+        elif temperatura > max_t:
             # abre só se ainda não estiver totalmente aberta
             if not (control.left_is_open and control.right_is_open):
                 desired_action = 'open'
             else:
                 desired_action = 'stop'
+
         else:
-            # fecha só se estiver aberta
-            if control.left_is_open or control.right_is_open:
-                desired_action = 'close'
-            else:
-                desired_action = 'stop'
+            # entre min e max: não manda abrir nem fechar
+            desired_action = 'stop'
 
         # guarda o status anterior para saber se o comando mudou
         previous_status = control.curtain_status
@@ -253,6 +257,7 @@ def get_status_api(request):
         "max_temperature": control.max_temperature,
 
         "latest_reading": None,
+        #"move_timeout_ms": int(control.curtain_move_time_seconds * 1000),
     }
 
     if latest:
@@ -320,9 +325,11 @@ def set_parameters_api(request):
         payload = json.loads(request.body)
         min_t = float(payload.get('min_temperature'))
         max_t = float(payload.get('max_temperature'))
+        #move_time = payload.get('curtain_move_time_seconds')
         control = _ensure_control()
         control.min_temperature = min_t
         control.max_temperature = max_t
+        #control.curtain_move_time_seconds = int(move_time)
         control.save()
         return JsonResponse({'success': True, 'message': 'Parâmetros atualizados!'})
     except Exception as e:

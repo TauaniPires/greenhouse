@@ -116,15 +116,15 @@
   <h2>Histórico de Temperatura e Umidade</h2>
 </div>
 
-<div class="filter-bar">
+<form method="get" action="{% url 'historico' %}" class="filter-bar">
   <label for="startDate">Data Inicial:</label>
-  <input type="date" id="startDate" value="{{ start_date }}" />
+  <input type="date" id="startDate" name="start" value="{{ start_date }}" />
 
   <label for="endDate">Data Final:</label>
-  <input type="date" id="endDate" value="{{ end_date }}" />
+  <input type="date" id="endDate" name="end" value="{{ end_date }}" />
 
-  <button id="filterBtn">Filtrar</button>
-</div>
+  <button type="submit">Filtrar</button>
+</form>
 
 <div class="chart-container">
   <canvas id="historicoChart"></canvas>
@@ -189,7 +189,19 @@
 
   const labels = leituras.map((l) => {
     const date = new Date(l.timestamp);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+    const dia = date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+    });
+
+    const hora = date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    // Array = rótulo em duas linhas (dia em cima, hora embaixo)
+    return [dia, hora];
   });
 
   const temperaturas = leituras.map((l) => l.temperature);
