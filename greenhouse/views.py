@@ -257,7 +257,7 @@ def get_status_api(request):
         "max_temperature": control.max_temperature,
 
         "latest_reading": None,
-        #"move_timeout_ms": int(control.curtain_move_time_seconds * 1000),
+        "move_timeout_ms": int(control.curtain_move_time_seconds * 1000),
     }
 
     if latest:
@@ -325,11 +325,11 @@ def set_parameters_api(request):
         payload = json.loads(request.body)
         min_t = float(payload.get('min_temperature'))
         max_t = float(payload.get('max_temperature'))
-        #move_time = payload.get('curtain_move_time_seconds')
+        move_time = payload.get('curtain_move_time_seconds')
         control = _ensure_control()
         control.min_temperature = min_t
         control.max_temperature = max_t
-        #control.curtain_move_time_seconds = int(move_time)
+        control.curtain_move_time_seconds = int(move_time)
         control.save()
         return JsonResponse({'success': True, 'message': 'Parâmetros atualizados!'})
     except Exception as e:

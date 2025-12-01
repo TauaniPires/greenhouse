@@ -47,10 +47,14 @@ class GreenhouseControl(models.Model):
     automatic_mode = models.BooleanField(default=True)
     singleton = models.BooleanField(default=True, editable=False, unique=True)
     last_esp_ping = models.DateTimeField(null=True, blank=True)
-
+    curtain_move_time_seconds = models.PositiveIntegerField(
+        default=120,  # 2 minutos
+        help_text="Tempo em segundos para a cortina abrir/fechar totalmente."
+    )
     def __str__(self):
         status = "Aberta" if self.curtain_is_open else "Fechada"
         return f"Configuração da Estufa - Faixa Ideal: {self.min_temperature}°C a {self.max_temperature}°C, Cortina: {status}"
+    
 
 
 class CurtainLog(models.Model):

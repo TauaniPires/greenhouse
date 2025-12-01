@@ -109,479 +109,523 @@
       <div class="card-body">
         <form id="params-form">
           {% csrf_token %}
-          <label for="min-temp" class="form-label"
-            >Temperatura Mínima (°C)</label
-          >
-          <input
-            type="number"
-            step="0.5"
-            class="form-control mb-2"
-            id="min-temp"
-            value="{{ control.min_temperature }}"
-          />
 
-          <label for="max-temp" class="form-label"
-            >Temperatura Máxima (°C)</label
-          >
-          <div class="input-group mb-3">
-            <input
-              type="number"
-              step="0.5"
-              class="form-control"
-              id="max-temp"
-              value="{{ control.max_temperature }}"
-            />
-            <button class="btn btn-outline-success" type="submit">
-              Salvar
-            </button>
+          <!-- Linha com mínima e máxima lado a lado -->
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label for="min-temp" class="form-label mb-1"
+                >Temp. Mínima (°C)</label
+              >
+              <input
+                type="number"
+                step="0.5"
+                class="form-control"
+                id="min-temp"
+                value="{{ control.min_temperature }}"
+              />
+            </div>
+            <div class="col-6">
+              <label for="max-temp" class="form-label mb-1"
+                >Temp. Máxima (°C)</label
+              >
+              <input
+                type="number"
+                step="0.5"
+                class="form-control"
+                id="max-temp"
+                value="{{ control.max_temperature }}"
+              />
+            </div>
           </div>
+
+          <!-- Linha do tempo da cortina -->
+          <div class="mb-3">
+            <label for="curtain_move_time_seconds" class="form-label mb-1">
+              Tempo de abertura da cortina
+            </label>
+            <div class="input-group">
+              <input
+                type="number"
+                class="form-control"
+                id="curtain_move_time_seconds"
+                name="curtain_move_time_seconds"
+                min="10"
+                max="600"
+                value="{{ control.curtain_move_time_seconds }}"
+              />
+              <span class="input-group-text">s</span>
+            </div>
+          </div>
+
+          <button
+            class="btn btn-outline-success w-100 fw-semibold"
+            type="submit"
+          >
+            Salvar
+          </button>
         </form>
       </div>
-    </div>
 
-    <!-- Toggle automático -->
-    <div class="form-check form-switch text-start mb-3">
-      <input
-        class="form-check-input"
-        type="checkbox"
-        id="auto-switch"
-        {%
-        if
-        control.automatic_mode
-        %}checked{%
-        endif
-        %}
-        onchange="toggleAutomaticMode(this.checked)"
-      />
-      <label class="form-check-label" for="autoModeSwitch"
-        >Modo Automático</label
-      >
-    </div>
-
-    <!-- Controle Manual — Esquerda -->
-    <div class="card shadow-sm mb-4">
-      <div class="card-header bg-white">
-        <h5 class="mb-0">Controle Manual — Cortina Esquerda</h5>
+      <!-- Toggle automático -->
+      <div class="form-check form-switch text-start mb-3">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          id="auto-switch"
+          {%
+          if
+          control.automatic_mode
+          %}checked{%
+          endif
+          %}
+          onchange="toggleAutomaticMode(this.checked)"
+        />
+        <label class="form-check-label" for="autoModeSwitch"
+          >Modo Automático</label
+        >
       </div>
-      <div class="card-body text-center">
-        <div class="btn-group w-100">
-          <button
-            id="left-open"
-            type="button"
-            class="btn btn-success btn-lg"
-            onclick="manualLeft('open')"
-          >
-            <i class="bi bi-arrow-up-circle"></i> Abrir
-          </button>
-          <button
-            id="left-stop"
-            type="button"
-            class="btn btn-warning btn-lg"
-            onclick="manualLeft('stop')"
-          >
-            <i class="bi bi-pause-circle"></i> Parar
-          </button>
-          <button
-            id="left-close"
-            type="button"
-            class="btn btn-danger btn-lg"
-            onclick="manualLeft('close')"
-          >
-            <i class="bi bi-arrow-down-circle"></i> Fechar
-          </button>
+
+      <!-- Controle Manual — Esquerda -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">Controle Manual — Cortina Esquerda</h5>
+        </div>
+        <div class="card-body text-center">
+          <div class="btn-group w-100">
+            <button
+              id="left-open"
+              type="button"
+              class="btn btn-success btn-lg"
+              onclick="manualLeft('open')"
+            >
+              <i class="bi bi-arrow-up-circle"></i> Abrir
+            </button>
+            <button
+              id="left-stop"
+              type="button"
+              class="btn btn-warning btn-lg"
+              onclick="manualLeft('stop')"
+            >
+              <i class="bi bi-pause-circle"></i> Parar
+            </button>
+            <button
+              id="left-close"
+              type="button"
+              class="btn btn-danger btn-lg"
+              onclick="manualLeft('close')"
+            >
+              <i class="bi bi-arrow-down-circle"></i> Fechar
+            </button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Controle Manual — Direita -->
-    <div class="card shadow-sm mb-4">
-      <div class="card-header bg-white">
-        <h5 class="mb-0">Controle Manual — Cortina Direita</h5>
-      </div>
-      <div class="card-body text-center">
-        <div class="btn-group w-100">
-          <button
-            id="right-open"
-            type="button"
-            class="btn btn-success btn-lg"
-            onclick="manualRight('open')"
-          >
-            <i class="bi bi-arrow-up-circle"></i> Abrir
-          </button>
-          <button
-            id="right-stop"
-            type="button"
-            class="btn btn-warning btn-lg"
-            onclick="manualRight('stop')"
-          >
-            <i class="bi bi-pause-circle"></i> Parar
-          </button>
-          <button
-            id="right-close"
-            type="button"
-            class="btn btn-danger btn-lg"
-            onclick="manualRight('close')"
-          >
-            <i class="bi bi-arrow-down-circle"></i> Fechar
-          </button>
+      <!-- Controle Manual — Direita -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">Controle Manual — Cortina Direita</h5>
+        </div>
+        <div class="card-body text-center">
+          <div class="btn-group w-100">
+            <button
+              id="right-open"
+              type="button"
+              class="btn btn-success btn-lg"
+              onclick="manualRight('open')"
+            >
+              <i class="bi bi-arrow-up-circle"></i> Abrir
+            </button>
+            <button
+              id="right-stop"
+              type="button"
+              class="btn btn-warning btn-lg"
+              onclick="manualRight('stop')"
+            >
+              <i class="bi bi-pause-circle"></i> Parar
+            </button>
+            <button
+              id="right-close"
+              type="button"
+              class="btn btn-danger btn-lg"
+              onclick="manualRight('close')"
+            >
+              <i class="bi bi-arrow-down-circle"></i> Fechar
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<div
-  id="toast-container"
-  class="toast-container position-fixed bottom-0 end-0 p-3"
-></div>
-{% endblock %} {% block scripts %}
-<script>
-  const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")
-    ? document.querySelector("[name=csrfmiddlewaretoken]").value
-    : "";
+  <div
+    id="toast-container"
+    class="toast-container position-fixed bottom-0 end-0 p-3"
+  ></div>
+  {% endblock %} {% block scripts %}
+  <script>
+    const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")
+      ? document.querySelector("[name=csrfmiddlewaretoken]").value
+      : "";
 
-  // desabilita/ativa todos botões manuais
-  function disableManualButtons(disabled) {
-    const ids = [
-      "left-open",
-      "left-stop",
-      "left-close",
-      "right-open",
-      "right-stop",
-      "right-close",
-    ];
-    ids.forEach((id) => {
-      const b = document.getElementById(id);
-      if (b) b.disabled = disabled;
-    });
-  }
-
-  // atualiza interface (dependendo do modo automático e do estado do ESP)
-  function updateInterfaceStateFromData(data) {
-    const isAuto = Boolean(data.automatic_mode);
-    const espOnline = Boolean(data.esp_online);
-    const autoSwitch = document.getElementById("auto-switch");
-
-    // mantém o switch sincronizado com o backend
-    if (autoSwitch) {
-      autoSwitch.checked = isAuto;
-    }
-
-    // se ESP offline -> tudo desativado
-    if (!espOnline) {
-      disableManualButtons(true);
-      document.getElementById("min-temp").disabled = true;
-      document.getElementById("max-temp").disabled = true;
-      document.querySelector("#params-form button").disabled = true;
-      if (autoSwitch) {
-        autoSwitch.disabled = true;
-      }
-      return;
-    }
-
-    // ESP online -> garante que o switch esteja habilitado
-    if (autoSwitch) {
-      autoSwitch.disabled = false;
-    }
-
-    // se automático -> desativa manuais e habilita parâmetros
-    if (isAuto) {
-      disableManualButtons(true);
-      document.getElementById("min-temp").disabled = false;
-      document.getElementById("max-temp").disabled = false;
-      document.querySelector("#params-form button").disabled = false;
-    } else {
-      // manual -> habilita controles manuais e desabilita parâmetros
-      disableManualButtons(false);
-      document.getElementById("min-temp").disabled = true;
-      document.getElementById("max-temp").disabled = true;
-      document.querySelector("#params-form button").disabled = true;
-    }
-  }
-
-  // função principal que busca status e atualiza UI
-  function updateStatus() {
-    fetch("{% url 'get_status_api' %}?device=browser")
-      .then((response) => response.json())
-      .then((data) => {
-        // sensor display
-        if (data.latest_reading) {
-          document.getElementById("temp-display").textContent =
-            data.latest_reading.temperature.toFixed(1);
-          document.getElementById("humidity-display").textContent =
-            data.latest_reading.humidity.toFixed(1);
-
-          const dt = new Date(data.latest_reading.timestamp);
-          const footerLastUpdate =
-            document.getElementById("footer-last-update");
-          if (footerLastUpdate) {
-            footerLastUpdate.textContent = dt.toLocaleString("pt-BR");
-          }
-        } else {
-          document.getElementById("temp-display").textContent = "--";
-          document.getElementById("humidity-display").textContent = "--";
-          const footerLastUpdate =
-            document.getElementById("footer-last-update");
-          if (footerLastUpdate) {
-            footerLastUpdate.textContent = "--";
-          }
-        }
-        // === Atualiza inputs de parâmetros ===
-        const minInput = document.getElementById("min-temp");
-        const maxInput = document.getElementById("max-temp");
-
-        if (minInput && data.min_temperature !== undefined) {
-          minInput.value = data.min_temperature;
-        }
-
-        if (maxInput && data.max_temperature !== undefined) {
-          maxInput.value = data.max_temperature;
-        }
-
-        // atualização do cartão de segurança
-        if (data.esp_ip)
-          document.getElementById("safety-esp-ip").textContent =
-            "IP do ESP: " + data.esp_ip;
-        document.getElementById("safety-last-contact").textContent =
-          "Último contato: " +
-          (data.last_contact_seconds !== null &&
-          data.last_contact_seconds !== undefined
-            ? data.last_contact_seconds + "s atrás"
-            : "--");
-
-        const safetyCard = document.getElementById("safety-card");
-        const safetyIcon = document.getElementById("safety-icon");
-        const safetyText = document.getElementById("safety-status-text");
-        safetyCard.classList.remove("open", "closed", "paused");
-
-        if (!data.esp_online) {
-          safetyText.textContent = "ESP Offline";
-          safetyIcon.className = "bi bi-wifi-off fs-1 text-danger";
-          safetyCard.classList.add("closed");
-        } else if (data.fail_safe) {
-          safetyText.textContent = "Fail-safe Ativo";
-          safetyIcon.className = "bi bi-shield-exclamation fs-1 text-warning";
-          safetyCard.classList.add("paused");
-        } else {
-          safetyText.textContent = "Conectado";
-          safetyIcon.className = "bi bi-shield-check fs-1 text-success";
-          safetyCard.classList.add("open");
-        }
-
-        // Se ESP offline, exibe offline nas duas cortinas e encerra (botões já desativados)
-        if (!data.esp_online) {
-          // left
-          document.getElementById("left-status-text").textContent = "Offline";
-          document.getElementById("left-icon").className =
-            "bi bi-wifi-off fs-1 text-danger";
-          document.getElementById("left-movement-text").textContent = "";
-
-          // right
-          document.getElementById("right-status-text").textContent = "Offline";
-          document.getElementById("right-icon").className =
-            "bi bi-wifi-off fs-1 text-danger";
-          document.getElementById("right-movement-text").textContent = "";
-
-          disableManualButtons(true);
-          return;
-        }
-
-        // --- LEFT card ---
-        const leftOpen = Boolean(data.left_is_open);
-        const leftAction = data.left || "stop";
-        const leftCard = document.getElementById("left-card");
-        const leftIcon = document.getElementById("left-icon");
-        const leftStatusText = document.getElementById("left-status-text");
-        const leftMovementText = document.getElementById("left-movement-text");
-        leftCard.classList.remove("open", "closed", "paused");
-        if (leftOpen) {
-          leftStatusText.textContent = "Aberta";
-          leftIcon.className = "bi bi-unlock-fill fs-1 text-umidade";
-          leftCard.classList.add("open");
-        } else {
-          leftStatusText.textContent = "Fechada";
-          leftIcon.className = "bi bi-lock-fill fs-1 text-aviso";
-          leftCard.classList.add("closed");
-        }
-        if (leftAction === "open")
-          leftMovementText.textContent = "Movimento: Abrindo 🔼";
-        else if (leftAction === "close")
-          leftMovementText.textContent = "Movimento: Fechando 🔽";
-        else leftMovementText.textContent = "Movimento: Parada ⏸️";
-        if (leftAction !== "stop") leftCard.classList.add("paused");
-
-        // --- RIGHT card ---
-        const rightOpen = Boolean(data.right_is_open);
-        const rightAction = data.right || "stop";
-        const rightCard = document.getElementById("right-card");
-        const rightIcon = document.getElementById("right-icon");
-        const rightStatusText = document.getElementById("right-status-text");
-        const rightMovementText = document.getElementById(
-          "right-movement-text"
-        );
-        rightCard.classList.remove("open", "closed", "paused");
-        if (rightOpen) {
-          rightStatusText.textContent = "Aberta";
-          rightIcon.className = "bi bi-unlock-fill fs-1 text-umidade";
-          rightCard.classList.add("open");
-        } else {
-          rightStatusText.textContent = "Fechada";
-          rightIcon.className = "bi bi-lock-fill fs-1 text-aviso";
-          rightCard.classList.add("closed");
-        }
-        if (rightAction === "open")
-          rightMovementText.textContent = "Movimento: Abrindo 🔼";
-        else if (rightAction === "close")
-          rightMovementText.textContent = "Movimento: Fechando 🔽";
-        else rightMovementText.textContent = "Movimento: Parada ⏸️";
-        if (rightAction !== "stop") rightCard.classList.add("paused");
-
-        // atualiza enable/disable dos botões conforme modo automático
-        updateInterfaceStateFromData(data);
-      })
-      .catch((err) => {
-        console.error("Erro ao buscar status:", err);
+    // desabilita/ativa todos botões manuais
+    function disableManualButtons(disabled) {
+      const ids = [
+        "left-open",
+        "left-stop",
+        "left-close",
+        "right-open",
+        "right-stop",
+        "right-close",
+      ];
+      ids.forEach((id) => {
+        const b = document.getElementById(id);
+        if (b) b.disabled = disabled;
       });
-  }
+    }
 
-  // ===== envio do form de parâmetros =====
-  document
-    .getElementById("params-form")
-    .addEventListener("submit", function (e) {
-      e.preventDefault();
-      const minTemp = parseFloat(document.getElementById("min-temp").value);
-      const maxTemp = parseFloat(document.getElementById("max-temp").value);
+    // atualiza interface (dependendo do modo automático e do estado do ESP)
+    function updateInterfaceStateFromData(data) {
+      const isAuto = Boolean(data.automatic_mode);
+      const espOnline = Boolean(data.esp_online);
+      const autoSwitch = document.getElementById("auto-switch");
 
-      fetch("{% url 'set_parameters_api' %}", {
+      // mantém o switch sincronizado com o backend
+      if (autoSwitch) {
+        autoSwitch.checked = isAuto;
+      }
+
+      // se ESP offline -> tudo desativado
+      if (!espOnline) {
+        disableManualButtons(true);
+        document.getElementById("min-temp").disabled = true;
+        document.getElementById("max-temp").disabled = true;
+        document.querySelector("#params-form button").disabled = true;
+        if (autoSwitch) {
+          autoSwitch.disabled = true;
+        }
+        return;
+      }
+
+      // ESP online -> garante que o switch esteja habilitado
+      if (autoSwitch) {
+        autoSwitch.disabled = false;
+      }
+
+      // se automático -> desativa manuais e habilita parâmetros
+      if (isAuto) {
+        disableManualButtons(true);
+        document.getElementById("min-temp").disabled = false;
+        document.getElementById("max-temp").disabled = false;
+        document.querySelector("#params-form button").disabled = false;
+      } else {
+        // manual -> habilita controles manuais e desabilita parâmetros
+        disableManualButtons(false);
+        document.getElementById("min-temp").disabled = true;
+        document.getElementById("max-temp").disabled = true;
+        document.querySelector("#params-form button").disabled = true;
+      }
+    }
+
+    // função principal que busca status e atualiza UI
+    function updateStatus() {
+      fetch("{% url 'get_status_api' %}?device=browser")
+        .then((response) => response.json())
+        .then((data) => {
+          // sensor display
+          if (data.latest_reading) {
+            document.getElementById("temp-display").textContent =
+              data.latest_reading.temperature.toFixed(1);
+            document.getElementById("humidity-display").textContent =
+              data.latest_reading.humidity.toFixed(1);
+
+            const dt = new Date(data.latest_reading.timestamp);
+            const footerLastUpdate =
+              document.getElementById("footer-last-update");
+            if (footerLastUpdate) {
+              footerLastUpdate.textContent = dt.toLocaleString("pt-BR");
+            }
+          } else {
+            document.getElementById("temp-display").textContent = "--";
+            document.getElementById("humidity-display").textContent = "--";
+            const footerLastUpdate =
+              document.getElementById("footer-last-update");
+            if (footerLastUpdate) {
+              footerLastUpdate.textContent = "--";
+            }
+          }
+          // === Atualiza inputs de parâmetros ===
+          const minInput = document.getElementById("min-temp");
+          const maxInput = document.getElementById("max-temp");
+
+          if (minInput && data.min_temperature !== undefined) {
+            minInput.value = data.min_temperature;
+          }
+
+          if (maxInput && data.max_temperature !== undefined) {
+            maxInput.value = data.max_temperature;
+          }
+
+          // atualização do cartão de segurança
+          if (data.esp_ip)
+            document.getElementById("safety-esp-ip").textContent =
+              "IP do ESP: " + data.esp_ip;
+          document.getElementById("safety-last-contact").textContent =
+            "Último contato: " +
+            (data.last_contact_seconds !== null &&
+            data.last_contact_seconds !== undefined
+              ? data.last_contact_seconds + "s atrás"
+              : "--");
+
+          const safetyCard = document.getElementById("safety-card");
+          const safetyIcon = document.getElementById("safety-icon");
+          const safetyText = document.getElementById("safety-status-text");
+          safetyCard.classList.remove("open", "closed", "paused");
+
+          if (!data.esp_online) {
+            safetyText.textContent = "ESP Offline";
+            safetyIcon.className = "bi bi-wifi-off fs-1 text-danger";
+            safetyCard.classList.add("closed");
+          } else if (data.fail_safe) {
+            safetyText.textContent = "Fail-safe Ativo";
+            safetyIcon.className = "bi bi-shield-exclamation fs-1 text-warning";
+            safetyCard.classList.add("paused");
+          } else {
+            safetyText.textContent = "Conectado";
+            safetyIcon.className = "bi bi-shield-check fs-1 text-success";
+            safetyCard.classList.add("open");
+          }
+
+          // Se ESP offline, exibe offline nas duas cortinas e encerra (botões já desativados)
+          if (!data.esp_online) {
+            // left
+            document.getElementById("left-status-text").textContent = "Offline";
+            document.getElementById("left-icon").className =
+              "bi bi-wifi-off fs-1 text-danger";
+            document.getElementById("left-movement-text").textContent = "";
+
+            // right
+            document.getElementById("right-status-text").textContent =
+              "Offline";
+            document.getElementById("right-icon").className =
+              "bi bi-wifi-off fs-1 text-danger";
+            document.getElementById("right-movement-text").textContent = "";
+
+            disableManualButtons(true);
+            return;
+          }
+
+          // --- LEFT card ---
+          const leftOpen = Boolean(data.left_is_open);
+          const leftAction = data.left || "stop";
+          const leftCard = document.getElementById("left-card");
+          const leftIcon = document.getElementById("left-icon");
+          const leftStatusText = document.getElementById("left-status-text");
+          const leftMovementText =
+            document.getElementById("left-movement-text");
+          leftCard.classList.remove("open", "closed", "paused");
+          if (leftOpen) {
+            leftStatusText.textContent = "Aberta";
+            leftIcon.className = "bi bi-unlock-fill fs-1 text-umidade";
+            leftCard.classList.add("open");
+          } else {
+            leftStatusText.textContent = "Fechada";
+            leftIcon.className = "bi bi-lock-fill fs-1 text-aviso";
+            leftCard.classList.add("closed");
+          }
+          if (leftAction === "open")
+            leftMovementText.textContent = "Movimento: Abrindo 🔼";
+          else if (leftAction === "close")
+            leftMovementText.textContent = "Movimento: Fechando 🔽";
+          else leftMovementText.textContent = "Movimento: Parada ⏸️";
+          if (leftAction !== "stop") leftCard.classList.add("paused");
+
+          // --- RIGHT card ---
+          const rightOpen = Boolean(data.right_is_open);
+          const rightAction = data.right || "stop";
+          const rightCard = document.getElementById("right-card");
+          const rightIcon = document.getElementById("right-icon");
+          const rightStatusText = document.getElementById("right-status-text");
+          const rightMovementText = document.getElementById(
+            "right-movement-text"
+          );
+          rightCard.classList.remove("open", "closed", "paused");
+          if (rightOpen) {
+            rightStatusText.textContent = "Aberta";
+            rightIcon.className = "bi bi-unlock-fill fs-1 text-umidade";
+            rightCard.classList.add("open");
+          } else {
+            rightStatusText.textContent = "Fechada";
+            rightIcon.className = "bi bi-lock-fill fs-1 text-aviso";
+            rightCard.classList.add("closed");
+          }
+          if (rightAction === "open")
+            rightMovementText.textContent = "Movimento: Abrindo 🔼";
+          else if (rightAction === "close")
+            rightMovementText.textContent = "Movimento: Fechando 🔽";
+          else rightMovementText.textContent = "Movimento: Parada ⏸️";
+          if (rightAction !== "stop") rightCard.classList.add("paused");
+
+          // atualiza enable/disable dos botões conforme modo automático
+          updateInterfaceStateFromData(data);
+        })
+        .catch((err) => {
+          console.error("Erro ao buscar status:", err);
+        });
+    }
+
+    // ===== envio do form de parâmetros =====
+    // ===== envio do form de parâmetros =====
+    document
+      .getElementById("params-form")
+      .addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const minTemp = parseFloat(document.getElementById("min-temp").value);
+        const maxTemp = parseFloat(document.getElementById("max-temp").value);
+        const curtainInput = document.getElementById(
+          "curtain_move_time_seconds"
+        );
+        const curtainTime = curtainInput
+          ? parseInt(curtainInput.value, 10)
+          : null;
+
+        const payload = {
+          min_temperature: minTemp,
+          max_temperature: maxTemp,
+        };
+
+        if (!Number.isNaN(curtainTime) && curtainTime > 0) {
+          payload.curtain_move_time_seconds = curtainTime;
+        }
+
+        fetch("{% url 'set_parameters_api' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify(payload),
+        })
+          .then((r) => r.json())
+          .then((data) => {
+            showToast(
+              data.success ? "Parâmetros salvos!" : "Erro ao salvar",
+              data.success ? "success" : "danger"
+            );
+            updateStatus();
+          });
+      });
+
+    // ===== toggle automatic mode =====
+    function toggleAutomaticMode(isAutomatic) {
+      fetch("{% url 'toggle_automatic_mode' %}", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-CSRFToken": csrfToken,
         },
-        body: JSON.stringify({
-          min_temperature: minTemp,
-          max_temperature: maxTemp,
-        }),
+        body: JSON.stringify({ automatic_mode: isAutomatic }),
       })
         .then((r) => r.json())
         .then((data) => {
           showToast(
-            data.success ? "Parâmetros salvos!" : "Erro ao salvar",
-            data.success ? "success" : "danger"
+            data.automatic_mode
+              ? "Modo automático ativado"
+              : "Modo manual ativado",
+            "success"
           );
           updateStatus();
+        })
+        .catch(() => showToast("Erro ao alternar modo", "danger"));
+    }
+
+    function manualLeft(action) {
+      fetch("{% url 'manual_left_api' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify({ action: action }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          // usa sempre a mensagem vinda do backend, se existir
+          const msg =
+            data.message ||
+            (data.success
+              ? "Comando enviado para a cortina esquerda."
+              : "Erro ao enviar comando.");
+
+          // se veio a mensagem de "Ação não realizada", mostra como aviso
+          const type = !data.success
+            ? "danger"
+            : msg.startsWith("Ação não realizada")
+            ? "warning"
+            : "success";
+
+          showToast(msg, type);
+          updateStatus();
+        })
+        .catch((err) => {
+          console.error("Erro ao enviar comando para a cortina esquerda:", err);
+          showToast("Erro de comunicação com o servidor.", "danger");
         });
-    });
+    }
 
-  // ===== toggle automatic mode =====
-  function toggleAutomaticMode(isAutomatic) {
-    fetch("{% url 'toggle_automatic_mode' %}", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrfToken,
-      },
-      body: JSON.stringify({ automatic_mode: isAutomatic }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        showToast(
-          data.automatic_mode
-            ? "Modo automático ativado"
-            : "Modo manual ativado",
-          "success"
-        );
-        updateStatus();
+    function manualRight(action) {
+      fetch("{% url 'manual_right_api' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify({ action: action }),
       })
-      .catch(() => showToast("Erro ao alternar modo", "danger"));
-  }
+        .then((r) => r.json())
+        .then((data) => {
+          const msg =
+            data.message ||
+            (data.success
+              ? "Comando enviado para a cortina direita."
+              : "Erro ao enviar comando.");
 
-  function manualLeft(action) {
-    fetch("{% url 'manual_left_api' %}", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrfToken,
-      },
-      body: JSON.stringify({ action: action }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        // usa sempre a mensagem vinda do backend, se existir
-        const msg =
-          data.message ||
-          (data.success
-            ? "Comando enviado para a cortina esquerda."
-            : "Erro ao enviar comando.");
+          const type = !data.success
+            ? "danger"
+            : msg.startsWith("Ação não realizada")
+            ? "warning"
+            : "success";
 
-        // se veio a mensagem de "Ação não realizada", mostra como aviso
-        const type = !data.success
-          ? "danger"
-          : msg.startsWith("Ação não realizada")
-          ? "warning"
-          : "success";
+          showToast(msg, type);
+          updateStatus();
+        })
+        .catch((err) => {
+          console.error("Erro ao enviar comando para a cortina direita:", err);
+          showToast("Erro de comunicação com o servidor.", "danger");
+        });
+    }
 
-        showToast(msg, type);
-        updateStatus();
-      })
-      .catch((err) => {
-        console.error("Erro ao enviar comando para a cortina esquerda:", err);
-        showToast("Erro de comunicação com o servidor.", "danger");
-      });
-  }
-
-  function manualRight(action) {
-    fetch("{% url 'manual_right_api' %}", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrfToken,
-      },
-      body: JSON.stringify({ action: action }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        const msg =
-          data.message ||
-          (data.success
-            ? "Comando enviado para a cortina direita."
-            : "Erro ao enviar comando.");
-
-        const type = !data.success
-          ? "danger"
-          : msg.startsWith("Ação não realizada")
-          ? "warning"
-          : "success";
-
-        showToast(msg, type);
-        updateStatus();
-      })
-      .catch((err) => {
-        console.error("Erro ao enviar comando para a cortina direita:", err);
-        showToast("Erro de comunicação com o servidor.", "danger");
-      });
-  }
-
-  function showToast(message, type = "success") {
-    const toastContainer = document.getElementById("toast-container");
-    const toastEl = document.createElement("div");
-    toastEl.className = `toast align-items-center text-bg-${type} border-0`;
-    toastEl.setAttribute("role", "alert");
-    toastEl.setAttribute("aria-live", "assertive");
-    toastEl.setAttribute("aria-atomic", "true");
-    toastEl.innerHTML = `<div class="d-flex">
+    function showToast(message, type = "success") {
+      const toastContainer = document.getElementById("toast-container");
+      const toastEl = document.createElement("div");
+      toastEl.className = `toast align-items-center text-bg-${type} border-0`;
+      toastEl.setAttribute("role", "alert");
+      toastEl.setAttribute("aria-live", "assertive");
+      toastEl.setAttribute("aria-atomic", "true");
+      toastEl.innerHTML = `<div class="d-flex">
       <div class="toast-body">${message}</div>
       <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
     </div>`;
-    toastContainer.appendChild(toastEl);
-    const toast = new bootstrap.Toast(toastEl);
-    toast.show();
-  }
+      toastContainer.appendChild(toastEl);
+      const toast = new bootstrap.Toast(toastEl);
+      toast.show();
+    }
 
-  // Inicializa
-  document.addEventListener("DOMContentLoaded", () => {
-    updateStatus();
-    setInterval(updateStatus, 5000);
-  });
-</script>
-{% endblock %}
+    // Inicializa
+    document.addEventListener("DOMContentLoaded", () => {
+      updateStatus();
+      setInterval(updateStatus, 5000);
+    });
+  </script>
+  {% endblock %}
+</div>

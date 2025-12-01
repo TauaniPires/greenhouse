@@ -62,7 +62,16 @@ body {
   border-color: var(--cor-primaria) !important;
   box-shadow: 0 0 0 0.15rem rgba(75, 145, 42, 0.25) !important;
 }
+#params-form .form-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #555;
+}
 
+#params-form .input-group-text {
+  border-radius: 12px;
+  font-size: 0.85rem;
+}
 /* Ícones */
 .text-temperatura {
   color: var(--cor-temperatura) !important;
